@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h1>ingres su correo electronico </h1>
+    <form action="{% url 'verificar_correo' %}" method="POST">
+        {% csrf_token %}
+        <label for="correo">correo</label>
+        <input type="email" name="correo" required>
+        <button type="submit"> enviar </button>
+    </form>
+</body>
+</html>

@@ -1,0 +1,134 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Simulador de Rutas</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <style>
+    #map { width: 100%; height: 90vh; }
+  </style>
+</head>
+<body>
+  <h1>Ruta Milagros - Simulador</h1>
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/@turf/turf/turf.min.js"></script>
+  <script>
+    const map = L.map('map').setView([10.64, -71.61], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    const busIcon = L.icon({
+      iconUrl: "{% static 'img/bus.png' %}",
+      iconSize: [48, 48],
+      iconAnchor: [24, 48],
+    });
+
+    // Verificar si el bus está cerca de una parada
+    function estaCercaDeParada(puntoActual, paradas, umbral = 15) {
+      return paradas.find(parada => {
+        const puntoParada = turf.point(parada.coords);
+        const distancia = turf.distance(puntoActual, puntoParada, { units: 'meters' });
+        return distancia < umbral;
+      });
+    }
+
+    // Animación de la ruta
+    function animarRuta(coords, marker, paradas) {
+      let i = 0;
+      const velocidad = 200 / 3.6; // 30 km/h
+      let enPausa = false;
+      let ultimoStopTime = 0;
+
+      function mover() {
+        if (i < coords.length - 1) {
+          const p1 = turf.point(coords[i]);
+          const p2 = turf.point(coords[i+1]);
+          const dist = turf.distance(p1, p2, { units: 'meters' });
+          const duracion = Math.max(dist / velocidad * 1000, 300);
+
+          let inicio = Date.now();
+          function paso() {
+            if (enPausa) return;
+
+            const progreso = (Date.now() - inicio) / duracion;
+            if (progreso < 1) {
+              const interp = turf.along(
+                turf.lineString([coords[i], coords[i+1]]),
+                progreso * dist,
+                { units: 'meters' }
+              );
+              const latlng = [interp.geometry.coordinates[1], interp.geometry.coordinates[0]];
+              marker.setLatLng(latlng);
+
+              const puntoActual = turf.point(interp.geometry.coordinates);
+              const paradaCercana = estaCercaDeParada(puntoActual, paradas);
+
+              if (paradaCercana && (Date.now() - ultimoStopTime > 3000)) {
+                enPausa = true;
+                marker.bindPopup("Esperando en " + paradaCercana.name).openPopup();
+
+                const progresoActual = progreso;
+
+                setTimeout(() => {
+                  marker.closePopup();
+                  enPausa = false;
+                  ultimoStopTime = Date.now();
+                  inicio = Date.now() - progresoActual * duracion;
+                  requestAnimationFrame(paso);
+                }, 5000);
+
+                return;
+              }
+
+              requestAnimationFrame(paso);
+            } else {
+              marker.setLatLng([coords[i+1][1], coords[i+1][0]]);
+              i++;
+              mover();
+            }
+          }
+          requestAnimationFrame(paso);
+        } else {
+          i = 0;
+          setTimeout(mover, 2000);
+        }
+      }
+
+      mover();
+    }
+
+    // Cargar GeoJSON
+    fetch("{% static 'rutas/capa_milagros.geojson' %}")
+      .then(res => res.json())
+      .then(data => {
+        const rutaFeature = data.features.find(f => f.geometry.type === "LineString");
+        const paradas = data.features.filter(f => f.geometry.type === "Point")
+          .map(f => ({
+            coords: f.geometry.coordinates,
+            name: f.properties.name
+          }));
+
+        L.geoJSON(rutaFeature, { color: "blue" }).addTo(map);
+        map.fitBounds(L.geoJSON(rutaFeature).getBounds());
+
+        data.features.filter(f => f.geometry.type === "Point").forEach(f => {
+          L.circleMarker([f.geometry.coordinates[1], f.geometry.coordinates[0]], {
+            radius: 6,
+            color: 'green',
+            fillColor: 'yellow',
+            fillOpacity: 0.8
+          }).bindPopup(f.properties.name).addTo(map);
+        });
+
+        const coords = rutaFeature.geometry.coordinates;
+        const bus = L.marker([coords[0][1], coords[0][0]], { icon: busIcon }).addTo(map);
+        animarRuta(coords, bus, paradas);
+      })
+      .catch(err => console.error('Error cargando GeoJSON:', err));
+  </script>
+</body>
+</html>

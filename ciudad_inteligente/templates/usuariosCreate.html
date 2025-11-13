@@ -1,0 +1,530 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Formulario de Usuario</title>
+    <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+</head>
+
+<style>
+    #clearPhotoBtn {
+        transition: opacity 0.3s ease;
+    }
+
+
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 26px;
+        margin-left: 10px;
+        margin-right: 20px;
+    }
+
+    .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: 0.4s;
+        border-radius: 26px;
+    }
+
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 20px;
+        width: 20px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: 0.4s;
+        border-radius: 50%;
+    }
+
+    input:checked+.slider {
+        background-color: #007bff;
+    }
+
+    input:checked+.slider:before {
+        transform: translateX(24px);
+    }
+
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 9999;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.6);
+    }
+
+    .modal-content {
+        background-color: #fff;
+        margin: 2% auto;
+        padding: 30px;
+        border-radius: 10px;
+        width: 60%;
+        max-width: 600px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        text-align: center;
+        position: relative;
+    }
+
+    .modal-content video {
+        width: 100%;
+        height: auto;
+        background: black;
+        border-radius: 6px;
+    }
+
+    .close-btn {
+        float: right;
+        font-size: 24px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .btn-modal {
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-top: 10px;
+    }
+
+    .btn-modal:hover {
+        background-color: #0056b3;
+    }
+
+    #photoOverlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 10;
+        background-color: rgba(0, 0, 0, 0.4);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+    }
+
+    #photoOverlay img {
+        max-width: 90%;
+        max-height: 90%;
+        border-radius: 6px;
+    }
+
+    #removePhotoBtn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-size: 24px;
+        font-weight: bold;
+        color: white;
+        cursor: pointer;
+    }
+</style>
+</head>
+
+<body>
+    {% if messages %}
+        {% for i in messages %}
+        <p> {{ i }} </p>
+        {% endfor %}
+    {% endif %}
+    <h2>Formulario de Usuario</h2>
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <label>Nombre de usuario:</label><br>
+        <input type="text" required name="nombre_usuario"><br><br>
+        <label>Clave:</label><br>
+        <input type="password" required name="clave" placeholder="contraseña"><br><br>
+        <label>Clave 2:</label><br>
+        <input type="password" required name="clave1" placeholder="verifique contraseña"><br><br>
+        <label>Correo electrónico:</label><br>
+        <input type="email" required name="correo"><br><br>
+        <label>Nombre:</label><br>
+        <input type="text" required name="nombre"><br><br>
+        <label>Apellido:</label><br>
+        <input type="text" required name="apellido"><br><br>
+        <label>Cédula:</label><br>
+        <input type="text" required name="cedula"><br><br>
+
+        <label>Tipo de usuario:</label><br><br>
+        <label>Administrador</label>
+        <label class="switch">
+            <input type="checkbox" id="adminSwitch" name="adminSwitch" value="ADMIN">
+            <span class="slider"></span>
+        </label>
+
+        <label>Común</label>
+        <label class="switch">
+            <input type="checkbox" id="comunSwitch" name="comunSwitch" value="COMUN">
+            <span class="slider"></span>
+        </label><br><br>
+
+
+        <div id="photoButtons">
+            <label for="uploadInput" class="btn-modal">Subir imagen desde PC</label>
+            <input type="file" id="uploadInput" name="foto_subida" accept="image/*" style="display:none;">
+            <button type="button" class="btn-modal" id="openCameraBtn">Tomar foto con cámara</button>
+        </div>
+        <div id="photoThumbnail" style="display:none; margin-top:10px; position:relative; width:max-content;">
+            <img id="finalPreview" src="#" alt="Foto seleccionada" style="max-width:150px; border-radius:6px;">
+            <span id="clearPhotoBtn" style="
+          position:absolute;
+          top:4px;
+          right:4px;
+          font-size:18px;
+          font-weight:bold;
+          color:white;
+          background:red;
+          border-radius:50%;
+          padding:0 6px;
+          line-height:20px;
+          cursor:pointer;
+          box-shadow:0 0 4px rgba(0,0,0,0.3);
+        ">
+                &times;
+            </span>
+        </div>
+        <button type="submit" class="btn-submit">Registrar usuario</button>
+        <!-- cuidado con este modal su estructura debe respetrase-->
+        <div id="cameraModal" class="modal">
+            <div class="modal-content">
+                <span id="closeCameraBtn" class="close-btn">&times;</span>
+                <h3>Captura tu rostro</h3>
+
+                <div style="position: relative;">
+                    <video id="cameraVideo" autoplay muted playsinline></video>
+                    <canvas id="cameraOverlay" style="position:absolute; top:0; left:0; pointer-events:none;"></canvas>
+
+                    <div id="photoOverlay"
+                        style="display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 10; display: flex; justify-content: center; align-items: center; flex-direction: column; background-color: rgba(0,0,0,0.4);">
+                        <img id="cameraPreview" src="#" alt="Vista previa"
+                            style="max-width: 90%; max-height: 90%; border-radius: 6px;">
+                        <span id="removePhotoBtn"
+                            style="position: absolute; top: 10px; right: 10px; font-size: 24px; font-weight: bold; color: white; cursor: pointer;">&times;</span>
+                    </div>
+                </div>
+
+                <br>
+                <button type="button" class="btn-modal" id="capturePhotoBtn">Capturar foto</button>
+                <input type="hidden" name="foto_capturada" id="fotoCapturada">
+            </div>
+        </div>
+    </form>
+
+
+    <script>
+        const adminSwitch = document.getElementById("adminSwitch");
+        const comunSwitch = document.getElementById("comunSwitch");
+
+        adminSwitch.addEventListener("change", () => {
+            if (adminSwitch.checked) comunSwitch.checked = false;
+        });
+
+        comunSwitch.addEventListener("change", () => {
+            if (comunSwitch.checked) adminSwitch.checked = false;
+        });
+    </script>
+
+    <script>
+        const uploadInput = document.getElementById("uploadInput");
+        const preview = document.getElementById("preview");
+
+        uploadInput.addEventListener("change", () => {
+            const file = uploadInput.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (evt) {
+                    preview.src = evt.target.result;
+                    preview.style.display = "block";
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    </script>
+
+    <script>
+        const openCameraBtn = document.getElementById("openCameraBtn");
+        const closeCameraBtn = document.getElementById("closeCameraBtn");
+        const cameraModal = document.getElementById("cameraModal");
+        const cameraVideo = document.getElementById("cameraVideo");
+        const capturePhotoBtn = document.getElementById("capturePhotoBtn");
+        const fotoCapturada = document.getElementById("fotoCapturada");
+        const cameraPreview = document.getElementById("cameraPreview");
+        const photoOverlay = document.getElementById("photoOverlay");
+        const removePhotoBtn = document.getElementById("removePhotoBtn");
+
+        let cameraStream = null;
+
+        openCameraBtn.onclick = async () => {
+            cameraModal.style.display = "block";
+            cameraPreview.src = "#";
+            cameraPreview.style.display = "none";
+            photoOverlay.style.display = "none";
+            capturePhotoBtn.textContent = "Capturar foto";
+
+            cameraStream = await navigator.mediaDevices.getUserMedia({
+                video: { width: 640, height: 480, facingMode: "user" },
+                audio: false
+            });
+            cameraVideo.srcObject = cameraStream;
+        };
+
+        closeCameraBtn.onclick = () => {
+            cameraModal.style.display = "none";
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+                cameraVideo.srcObject = null;
+            }
+        };
+
+        capturePhotoBtn.onclick = () => {
+            if (cameraPreview.style.display === "block") {
+                // Confirmar subida
+                cameraModal.style.display = "none";
+                if (cameraStream) {
+                    cameraStream.getTracks().forEach(track => track.stop());
+                    cameraVideo.srcObject = null;
+                }
+                return;
+            }
+
+            const canvas = document.createElement("canvas");
+            canvas.width = cameraVideo.videoWidth;
+            canvas.height = cameraVideo.videoHeight;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(cameraVideo, 0, 0, canvas.width, canvas.height);
+            const imageData = canvas.toDataURL("image/jpeg", 0.92);
+            fotoCapturada.value = imageData;
+            cameraPreview.src = imageData;
+            cameraPreview.style.display = "block";
+            photoOverlay.style.display = "flex";
+            capturePhotoBtn.textContent = "Subir foto";
+        };
+
+        removePhotoBtn.onclick = () => {
+            cameraPreview.src = "#";
+            cameraPreview.style.display = "none";
+            photoOverlay.style.display = "none";
+            fotoCapturada.value = "";
+            capturePhotoBtn.textContent = "Capturar foto";
+        };
+    </script>
+
+    <script>
+        window.addEventListener("DOMContentLoaded", async () => {
+            // Switches
+            const adminSwitch = document.getElementById("adminSwitch");
+            const comunSwitch = document.getElementById("comunSwitch");
+            adminSwitch.addEventListener("change", () => {
+                if (adminSwitch.checked) comunSwitch.checked = false;
+            });
+            comunSwitch.addEventListener("change", () => {
+                if (comunSwitch.checked) adminSwitch.checked = false;
+            });
+
+            // Subida desde PC
+            const uploadInput = document.getElementById("uploadInput");
+            const preview = document.getElementById("preview");
+            const fotoCapturada = document.getElementById("fotoCapturada");
+            const photoButtons = document.getElementById("photoButtons");
+            const photoThumbnail = document.getElementById("photoThumbnail");
+            const finalPreview = document.getElementById("finalPreview");
+            const clearPhotoBtn = document.getElementById("clearPhotoBtn");
+
+            uploadInput.addEventListener("change", () => {
+                const file = uploadInput.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function (evt) {
+                        finalPreview.src = evt.target.result;
+                        photoThumbnail.style.display = "block";
+                        photoButtons.style.display = "none";
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            clearPhotoBtn.onclick = () => {
+                finalPreview.src = "#";
+                photoThumbnail.style.display = "none";
+                photoButtons.style.display = "block";
+                fotoCapturada.value = "";
+                uploadInput.value = "";
+            };
+
+            function mostrarMiniaturaDesdeCamara(base64) {
+                finalPreview.src = base64;
+                photoThumbnail.style.display = "block";
+                photoButtons.style.display = "none";
+            }
+
+            // Elementos de cámara
+            const openCameraBtn = document.getElementById("openCameraBtn");
+            const closeCameraBtn = document.getElementById("closeCameraBtn");
+            const cameraModal = document.getElementById("cameraModal");
+            const cameraVideo = document.getElementById("cameraVideo");
+            const cameraOverlay = document.getElementById("cameraOverlay");
+            const capturePhotoBtn = document.getElementById("capturePhotoBtn");
+            const cameraPreview = document.getElementById("cameraPreview");
+            const photoOverlay = document.getElementById("photoOverlay");
+            const removePhotoBtn = document.getElementById("removePhotoBtn");
+
+            let cameraStream = null;
+            let faceDetected = false;
+
+            async function loadFaceModels() {
+                const MODEL_URL = "/static/models";
+                await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
+            }
+
+            function syncCanvasToVideo() {
+                const vw = cameraVideo.videoWidth;
+                const vh = cameraVideo.videoHeight;
+                cameraOverlay.width = vw;
+                cameraOverlay.height = vh;
+                cameraOverlay.style.width = cameraVideo.clientWidth + "px";
+                cameraOverlay.style.height = cameraVideo.clientHeight + "px";
+                return { width: vw, height: vh };
+            }
+
+            async function runFaceDetectionLoop() {
+                if (!cameraVideo || cameraVideo.paused || cameraVideo.ended) return;
+
+                const displaySize = syncCanvasToVideo();
+                const results = await faceapi.detectAllFaces(cameraVideo)
+                    .withFaceLandmarks()
+                    .withFaceDescriptors()
+                    .withFaceExpressions();
+
+                faceDetected = results.length > 0;
+
+                const resized = faceapi.resizeResults(results, displaySize);
+                const ctx = cameraOverlay.getContext("2d");
+                ctx.clearRect(0, 0, cameraOverlay.width, cameraOverlay.height);
+                faceapi.draw.drawFaceLandmarks(cameraOverlay, resized);
+
+                setTimeout(runFaceDetectionLoop, 100);
+            }
+
+            openCameraBtn.onclick = async () => {
+                cameraModal.style.display = "block";
+                cameraPreview.src = "#";
+                cameraPreview.style.display = "none";
+                photoOverlay.style.display = "none";
+                capturePhotoBtn.textContent = "Capturar foto";
+
+                await loadFaceModels();
+
+                cameraStream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: 640, height: 480, facingMode: "user" },
+                    audio: false
+                });
+
+                cameraVideo.srcObject = cameraStream;
+
+                cameraVideo.onloadedmetadata = () => {
+                    cameraVideo.play();
+                    runFaceDetectionLoop();
+                };
+            };
+
+            closeCameraBtn.onclick = () => {
+                cameraModal.style.display = "none";
+                if (cameraStream) {
+                    cameraStream.getTracks().forEach(track => track.stop());
+                    cameraVideo.srcObject = null;
+                }
+            };
+
+            capturePhotoBtn.onclick = () => {
+                // Si ya hay una imagen capturada, el botón está en modo "Subir foto"
+                if (capturePhotoBtn.textContent === "Subir foto") {
+                    cameraModal.style.display = "none";
+                    if (cameraStream) {
+                        cameraStream.getTracks().forEach(track => track.stop());
+                        cameraVideo.srcObject = null;
+                    }
+
+                    // ✅ Mostrar miniatura persistente solo ahora
+                    mostrarMiniaturaDesdeCamara(fotoCapturada.value);
+                    return;
+                }
+
+                // Validar rostro
+                if (!faceDetected) {
+                    alert("⚠️ No se detectó ningún rostro. Asegúrate de estar visible en cámara.");
+                    return;
+                }
+
+                // Capturar imagen
+                const canvas = document.createElement("canvas");
+                canvas.width = cameraVideo.videoWidth;
+                canvas.height = cameraVideo.videoHeight;
+                const ctx = canvas.getContext("2d");
+                ctx.drawImage(cameraVideo, 0, 0, canvas.width, canvas.height);
+                const imageData = canvas.toDataURL("image/jpeg", 0.92);
+
+                fotoCapturada.value = imageData;
+                cameraPreview.src = imageData;
+                cameraPreview.style.display = "block";
+                photoOverlay.style.display = "flex";
+                capturePhotoBtn.textContent = "Subir foto";
+
+                const overlayCtx = cameraOverlay.getContext("2d");
+                overlayCtx.clearRect(0, 0, cameraOverlay.width, cameraOverlay.height);
+
+                // ❌ No mostrar miniatura aún
+            };
+            removePhotoBtn.onclick = () => {
+                cameraPreview.src = "#";
+                cameraPreview.style.display = "none";
+                photoOverlay.style.display = "none";
+                fotoCapturada.value = "";
+                capturePhotoBtn.textContent = "Capturar foto";
+            };
+
+
+            clearPhotoBtn.onclick = () => {
+                finalPreview.src = "#";
+                photoThumbnail.style.display = "none";
+                photoButtons.style.display = "block";
+                fotoCapturada.value = "";
+                uploadInput.value = "";
+                cameraPreview.src = "#";
+                cameraPreview.style.display = "none";
+                photoOverlay.style.display = "none";
+                capturePhotoBtn.textContent = "Capturar foto";
+            };
+        });
+    </script>
+
+</body>
+
+</html>

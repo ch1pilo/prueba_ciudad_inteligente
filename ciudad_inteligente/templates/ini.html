@@ -1,0 +1,42 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'css/styleinicio.css' %}">
+    <title>TrafficZone</title>
+</head>
+<body>
+
+<header class="navbar">
+<div class="logo">TrafficZone</div>
+
+<nav class="nav-links">
+    <a href="#" class="active">INICIO</a>
+    <a href="{% url 'login' %}" aria-label="login">Login</a>
+    <a href="{% url 'usuarios' %}">Crear usuario</a>
+</nav>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+
+    <!-- IMAGEN PRINCIPAL -->
+    <img 
+        class="hero-img"
+        src="https://i.ibb.co/qY1FrLq5/prueba-traficc.png"
+        alt="Ruta Segura">
+
+    <!-- TEXTOS -->
+    <span class="tag tag-top">Rastrea</span>
+    <span class="tag tag-left">Planifica</span>
+    <span class="tag tag-right">Viaja con<br>comodidad</span>
+
+    <!-- BULLET -->
+    <ul class="hero-bullets">
+        <li>Tu Bus, en Tiempo Real.</li>
+    </ul>
+</section>
+</body>
+</html>
