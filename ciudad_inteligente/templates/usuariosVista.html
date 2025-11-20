@@ -4,39 +4,295 @@
 
 <head>
     <meta charset="UTF-8">
+    <title>TrafficZone - Personas Registradas</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Usuarios</title>
-   
+    <link rel="stylesheet" href="{% static 'css/styleusuarioVista.css' %}">
+    <!-- Fuente Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <!-- Iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 
 <body>
 
-    {% if messages %}
-        {% for i in messages %}
-        <p> {{ i }} </p>
-        {% endfor %}
-    {% endif %}
+    <style>
+        /* Estilo para quitar el fondo y borde del botón */
+        .btn-search-icon {
+            background: none;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            outline: none;
+            color: #555;
+            /* Cambia este color según tu diseño */
+            font-size: 16px;
+            /* Ajusta el tamaño del ícono aquí */
+        }
 
-    <a href="{% url 'usuariosCrear' %}">Nuevo Usuario</a>
-    <h1>Usuarios</h1>
-    {% if usuariosTotales %}
-        <ul>
-            {% for usuario in usuariosTotales %}
-            <form action="{% url 'editarUsuario' %}" method="POST">
+        .btn-search-icon:hover {
+            color: #000;
+            /* Color al pasar el mouse */
+        }
+
+        /* Asegúrate que tu search-box alinee los elementos */
+        .search-box {
+            display: flex;
+            align-items: center;
+            /* Otros estilos de tu caja... */
+        }
+    </style>
+
+    <header class="topbar">
+        <div class="topbar-left">TrafficZone</div>
+
+        <div class="topbar-center">
+            <form action="{% url 'usuarios'  %}" method="POST">
                 {% csrf_token %}
-                <li>Usuario= {{ usuario.usuario.username }} 
-                    Nombre={{ usuario.nombre }}
-                    Tipo de usuario= {{ usuario.tipo_usuario }} estatus = {{usuario.estatus}}
-                </li>
-                <input name="id" type="hidden" value="{{usuario.usuario.id}}">
-                <button type="submit"> EDITAR </button>
+                <div class="search-box">
+                    <button class="btn-search-icon" type="submit">
+                        <i class="fas fa-search"></i>
+                    </button>
+                    <input name="busqueda" type="text" placeholder="Buscar persona o correo">
+                </div>
             </form>
-            {% endfor%}
-        </ul>
+        </div>
+        <div class="topbar-right">
+            <a class="btn-logout" href="{% url 'dashboard' %}">
+                <i class="fa-solid fa-chart-line"></i>
+                Dashboard
+            </a>
 
-    {% else %}
-            <p>No hay usuarios</p>
-    {% endif %}
+            <a class="btn-logout" href="{% url 'bots' %}">
+                <i class="fa-solid fa-robot"></i>
+                Bots
+            </a>
+
+            <a class="btn-logout" href="{% url 'simula' %}">
+                <i class="fa-solid fa-location-dot"></i>
+                Simulación
+            </a>
+
+            <a class="btn-logout" href="{% url 'logout_views' %}">
+                <i class="fas fa-arrow-right-from-bracket"></i>
+                cerrar sesión
+            </a>
+        </div>
+    </header>
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="users-main">
+        <div class="users-grid">
+
+            <!-- PANEL IZQUIERDO: TABLA -->
+            <section class="users-card">
+                <div class="users-header">
+                    <div class="users-title-block">
+                        <h1 class="users-title">Personas registradas</h1>
+                        <p class="users-subtitle">Usuarios finales registrados en la plataforma TrafficZone.</p>
+                    </div>
+                    <div class="users-badge">
+                        <span class="dot"></span>
+                        {{tr}} usuarios
+                    </div>
+                </div>
+                <style>
+                    /* 1. Contenedor FLEX que ocupa todo el ancho */
+                    .users-filters {
+                        display: flex !important;
+                        width: 100% !important;
+                        align-items: center;
+                        gap: 10px;
+                        margin-bottom: 20px;
+                    }
+
+                    /* 2. Estilo del Botón Redondo, Verde y Pegado a la Derecha */
+                    .btn-round-add {
+                        /* LA MAGIA: Esto lo empuja totalmente a la derecha */
+                        margin-left: auto !important;
+
+                        /* Forma y Color */
+                        width: 45px;
+                        /* Ancho fijo */
+                        height: 45px;
+                        /* Alto igual al ancho */
+                        background-color: #08aa16 !important;
+                        /* Verde */
+                        border-radius: 50%;
+                        /* Círculo perfecto */
+
+                        /* Centrar el ícono */
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+
+                        /* Texto/Icono */
+                        color: #ffffff;
+                        text-decoration: none;
+                        font-size: 1.2rem;
+                        /* Tamaño del + */
+                        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                        transition: transform 0.2s, background-color 0.2s;
+                    }
+
+                    /* Efecto al pasar el mouse */
+                    .btn-round-add:hover {
+                        background-color: #059669;
+                        /* Verde más oscuro */
+                        transform: scale(1.05);
+                    }
+                </style>
+                <!-- Filtros tipo chips -->
+                <div class="users-filters">
+                    <button class="chip active">Todos</button>
+                    <button class="chip">Verificados</button>
+                    <button class="chip">No verificados</button>
+                    <button class="chip">Sin actividad reciente</button>
+                    <a class="btn-round-add" href="{% url 'usuariosCrear' %}">
+                        <i class="fas fa-plus"></i>
+                    </a>
+                </div>
+
+                <!-- TABLA -->
+                <div class="users-table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Usuario</th>
+                                <th>Tipo de cuenta</th>
+                                <th>Correo electrónico</th>
+                                <th>Estado</th>
+                                <th>Último acceso</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                            {% if resultados %}
+                            {% for t in resultados %}
+                            <tr class="division">
+                                <td>
+                                    <div class="user-cell">
+                                        <div class="user-avatar">{{t.avatar}}</div>
+                                        <div>
+                                            <div class="user-name">{{t.nombre}} {{i.apellido}}</div>
+                                            <div class="user-mail">{{t.usuario.email}}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{t.tipo_usuario}}</td>
+                                <td>{{t.usuario.email}}</td>
+                                <td>
+                                    <span class="status-pill verified">
+                                        <span class="dot"></span> {{t.estatus}}
+                                    </span>
+                                </td>
+                                <td>{{t.usuario.last_login}}</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <a href="{% url 'editarUsuario'  t.usuario.id %}" class="btn-mini"><i
+                                                class="fas fa-pen"></i>Editar</a>
+
+                                    </div>
+                                </td>
+                            </tr>
+
+                            {% endfor %}
+                            {% endif %}
+
+                            {% for i in usuariosTotales %}
+                            <tr>
+                                <td>
+                                    <div class="user-cell">
+                                        <div class="user-avatar">{{i.avatar}}</div>
+                                        <div>
+                                            <div class="user-name">{{i.nombre}} {{i.apellido}}</div>
+                                            <div class="user-mail">{{i.usuario.email}}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{i.tipo_usuario}}</td>
+                                <td>{{i.usuario.email}}</td>
+                                <td>
+                                    {% if i.estatus %}
+                                    <span class="status-pill verified">
+                                        <span class="dot"></span> {{i.estatus}}
+                                    </span>
+                                    {% else %}
+                                    <span class="status-pill blocked">
+                                        <span class="dot "></span> {{i.estatus}}
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td>{{i.usuario.last_login}}</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <a href="{% url 'editarUsuario'  i.usuario.id %}" class="btn-mini"><i
+                                                class="fas fa-pen"></i>Editar</a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- COLUMNA DERECHA -->
+            <section class="right-column">
+                <!-- RESUMEN DE USUARIOS -->
+                <div class="summary-card">
+                    <h2 class="summary-title">Resumen de usuarios</h2>
+                    <div class="summary-grid">
+                        <div class="summary-item">
+                            <div class="summary-label">Total</div>
+                            <div class="summary-value">{{t}}</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-label">Verificados</div>
+                            <div class="summary-value">{{tv}}</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-label">No verificados</div>
+                            <div class="summary-value">{{tsv}}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FILTROS AVANZADOS -->
+                <form action="{% url 'usuarios' %}" method="POST">
+                    {% csrf_token %}
+                    <div class="filter-card">
+                        <h2 class="summary-title">Filtros avanzados</h2>
+
+                        <div class="filter-row">
+                            <label class="filter-label">Tipo de cuenta</label>
+                            <select name="tipo" class="filter-select">
+                                <option value="">Todos los tipos</option>
+                                <option value="comun">Comun</option>
+                                <option value="admin">Administrador</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-row">
+                            <label class="filter-label">Estado</label>
+                            <select name="estado" class="filter-select">
+                                <option value="">Todos los estados</option>
+                                <option value="1">activo</option>
+                                <option value="0">inactivo</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-actions">
+                            <button type="reset" class="btn-filter secondary">Limpiar</button>
+                            <button type="submit" class="btn-filter primary">Aplicar filtros</button>
+                        </div>
+                    </div>
+                </form>
+
+            </section>
+        </div>
+    </main>
+
 </body>
 
 </html>

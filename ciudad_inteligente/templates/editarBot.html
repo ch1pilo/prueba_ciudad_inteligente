@@ -1,0 +1,90 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>TrafficZone - Editar Bot</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="{% static 'css/editar_user.css' %}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <header class="navbar">
+    <div class="logo">TrafficZone</div>
+    <nav class="nav-links">
+      <a class="btn-logout" href="{% url 'bots' %}">Volver</a>
+    </nav>
+  </header>
+
+  <!-- SECCIÓN EDITAR BOT -->
+  <section class="register-hero">
+    <div class="register-card">
+      <div class="register-subtitle">GESTIÓN DE</div>
+      <h1 class="register-title">BOT</h1>
+
+      {% if messages %}
+        {% for i in messages %}
+          <p>{{ i }}</p>
+        {% endfor %}
+      {% endif %} 
+
+      <form class="register-form" action="{% url 'editarBot' bot.id %}" method="POST">
+        {% csrf_token %}
+
+        <!-- NOMBRE -->
+        <div class="input-group">
+          <i class="fas fa-user"></i>
+          <input type="text" name="nombre" class="field" value="{{bot.nombre}}" placeholder="Nombre">
+        </div>
+
+        <!-- APELLIDO -->
+        <div class="input-group">
+          <i class="fas fa-user"></i>
+          <input type="text" name="apellido" class="field" value="{{bot.apellido}}" placeholder="Apellido">
+        </div>
+
+        <!-- EDAD -->
+        <div class="input-group">
+          <i class="fas fa-calendar"></i>
+          <input type="number" name="edad" class="field" value="{{bot.edad}}" placeholder="Edad">
+        </div>
+
+        <!-- CÉDULA -->
+        <div class="input-group">
+          <i class="fas fa-id-card"></i>
+          <input type="text" name="cedula" class="field" value="{{bot.cedula}}" placeholder="Cédula">
+        </div>
+
+        <!-- GÉNERO -->
+        <div class="input-group">
+          <i class="fas fa-venus-mars"></i>
+          <select name="genero" class="field">
+            <option value="Masculino" {% if bot.genero == "M" %}selected{% endif %}>Masculino</option>
+            <option value="Femenina" {% if bot.genero == "F" %}selected{% endif %}>Femenino</option>
+            <option value="Otro" {% if bot.genero == "O" %}selected{% endif %}>Otro</option>
+          </select>
+        </div>
+
+        <!-- CHECKBOXES -->
+        <div class="register-row">
+          <label><input type="checkbox" name="activo" {% if bot.activo %}checked{% endif %}> Activo</label>
+          <label><input type="checkbox" name="discapacidad" {% if bot.discapacidad %}checked{% endif %}> Discapacidad</label>
+          <label><input type="checkbox" name="embarazo" {% if bot.embarazo %}checked{% endif %}> Embarazo</label>
+          <label><input type="checkbox" name="suscripcion" {% if bot.suscripcion %}checked{% endif %}> Suscripción</label>
+        </div>
+
+        <input type="hidden" name="id" value="{{bot.id}}">
+
+        <button type="submit" class="btn-primary">Actualizar Bot</button>
+      </form>
+
+      <div class="register-footer">
+        <a href="{% url 'bots' %}">Ver listado de Bots</a>
+      </div>
+    </div>
+  </section>
+
+</body>
+</html>

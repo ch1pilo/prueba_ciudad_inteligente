@@ -1,44 +1,128 @@
+{% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <meta charset="UTF-8" />
+  <title>TrafficZone - Editar Usuario</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="{% static 'css/editar_user.css' %}">
 </head>
 <body>
-    {% if messages %}
-        {% for i in messages %}
-            <p>{{ i }}</p>
-        {% endfor %}
-    {% endif %}
 
-    <form action="{% url 'editar_user' %}" method="POST">
+  <!-- NAVBAR -->
+  <header class="navbar">
+    <div class="logo">TrafficZone</div>
+    <nav class="nav-links">
+      <a href="index.html">INICIO</a>
+      <a href="#about">ACERCA DE NOSOTROS</a>
+      <a href="#contacto">CONTÁCTANOS</a>
+    </nav>
+  </header>
+
+  <!-- SECCIÓN EDITAR -->
+  <section class="register-hero">
+
+    <div class="register-card">
+      <div class="register-subtitle">GESTIÓN DE</div>
+      <h1 class="register-title">USUARIO</h1>
+
+      {% if messages %}
+        {% for i in messages %}
+          <p>{{ i }}</p>
+        {% endfor %}
+      {% endif %}
+
+      <form class="register-form" action="{% url 'editar_user' %}" method="POST">
         {% csrf_token %}
-            <label>Nombre de usuario:</label><br>
-            <input type="text" name="nombre_usuario" value="{{u.username}}"><br><br>
-            <label>Nombre:</label><br>
-            <input type="text" name="nombre" value="{{d.nombre}}"><br><br>
-            <label>Apellido:</label><br>
-            <input type="text" name="apellido" value="{{d.apellido}}"><br><br>
-            <label>Cédula:</label><br>
-            <input type="text" name="cedula" value="{{d.cedula}}"><br><br>
-            <label>Correo electrónico:</label><br>
-            <input type="email" name="correo" value="{{u.email}}"><br><br>
-            <label>Clave:</label><br>
-            <input type="password"  name="clave"  placeholder="Cambiar clave"><br><br>
-            <label>Clave 2:</label><br>
-            <input type="password" name="clave1"  placeholder="Cambiar clave"><br><br>
-            <input type="hidden" name="id" value="{{u.id}}">
-            <select name="estatus">
-                {% if d.estatus == False %}
-                <option value="0">Inactivo</option>
-                <option value="1">Activo</option>
-                {% elif d.estatus == True %}
-                <option value="1">Activo</option>
-                <option value="0">Inactivo</option>
-                {% endif %}                
-            </select>
-            <button type="submit"> Actualizar </button>
-    </form>
+
+        <!-- NOMBRE DE USUARIO -->
+        <div class="input-group">
+          <i class="fas fa-user"></i>
+          <input type="text" name="nombre_usuario" class="field" value="{{u.username}}" placeholder="Nombre de usuario">
+        </div>
+
+        <!-- NOMBRE -->
+        <div class="input-group">
+          <i class="fas fa-user"></i>
+          <input type="text" name="nombre" class="field" value="{{d.nombre}}" placeholder="Nombre">
+        </div>
+
+        <!-- APELLIDO -->
+        <div class="input-group">
+          <i class="fas fa-user"></i>
+          <input type="text" name="apellido" class="field" value="{{d.apellido}}" placeholder="Apellido">
+        </div>
+
+        <!-- CÉDULA -->
+        <div class="input-group">
+          <i class="fas fa-id-card"></i>
+          <input type="text" name="cedula" class="field" value="{{d.cedula}}" placeholder="Cédula">
+        </div>
+
+        <!-- CORREO -->
+        <div class="input-group">
+          <i class="fas fa-envelope"></i>
+          <input type="email" name="correo" class="field" value="{{u.email}}" placeholder="Correo electrónico">
+        </div>
+
+        <!-- CLAVE -->
+        <div class="input-group" style="position: relative;">
+          <i class="fas fa-lock"></i>
+          <input type="password" name="clave" class="field" placeholder="Cambiar clave">
+          <i class="fas fa-eye icon-password" onclick="togglePassword()"></i>
+        </div>
+
+        <!-- CLAVE 2 -->
+        <div class="input-group" style="position: relative;">
+          <i class="fas fa-lock"></i>
+          <input type="password" name="clave1" class="field" placeholder="Confirmar clave">
+          <i class="fas fa-eye icon-password" onclick="togglePassword()"></i>
+        </div>
+
+        <!-- ESTATUS -->
+        <div class="input-group">
+          <select name="estatus" class="field">
+            {% if d.estatus == False %}
+              <option value="0">Inactivo</option>
+              <option value="1">Activo</option>
+            {% elif d.estatus == True %}
+              <option value="1">Activo</option>
+              <option value="0">Inactivo</option>
+            {% endif %}
+          </select>
+        </div>
+
+        <input type="hidden" name="id" value="{{u.id}}">
+
+        <button type="submit" class="btn-primary">Actualizar</button>
+      </form>
+
+      <div class="register-footer">
+        ¿Quieres volver?
+        <a href="index.html">Ir al inicio</a>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- SCRIPT PARA MOSTRAR CONTRASEÑA -->
+  <script>
+    function togglePassword() {
+      var passFields = document.querySelectorAll('input[type="password"]');
+      var icons = document.querySelectorAll('.icon-password');
+      passFields.forEach(field => {
+        if (field.type === "password") {
+          field.type = "text";
+        } else {
+          field.type = "password";
+        }
+      });
+      icons.forEach(icon => {
+        icon.classList.toggle('fa-eye');
+        icon.classList.toggle('fa-eye-slash');
+      });
+    }
+  </script>
+
 </body>
 </html>

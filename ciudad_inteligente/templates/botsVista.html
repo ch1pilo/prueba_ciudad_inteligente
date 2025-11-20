@@ -1,0 +1,290 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>TrafficZone - Bots Registrados</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'css/styleusuarioVista.css' %}">
+    <!-- Fuente Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <!-- Iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+
+<body>
+    <style>
+        /* Estilo para quitar el fondo y borde del botón */
+        .btn-search-icon {
+            background: none;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            outline: none;
+            color: #555;
+            /* Cambia este color según tu diseño */
+            font-size: 16px;
+            /* Ajusta el tamaño del ícono aquí */
+        }
+
+        .btn-search-icon:hover {
+            color: #000;
+            /* Color al pasar el mouse */
+        }
+
+        /* Asegúrate que tu search-box alinee los elementos */
+        .search-box {
+            display: flex;
+            align-items: center;
+            /* Otros estilos de tu caja... */
+        }
+    </style>
+    <!-- TOPBAR -->
+    <header class="topbar">
+        <div class="topbar-left">TrafficZone</div>
+
+        <div class="topbar-center">
+            <form action="{% url 'bots' %}" method="POST">
+                {% csrf_token %}
+                <div class="search-box">
+                    <button class="btn-search-icon" type="submit">
+                        <i class="fas fa-search"></i>
+                    </button>
+
+                    <input name="busqueda" type="text" placeholder="Buscar bot por nombre o cédula">
+
+                </div>
+            </form>
+        </div>
+        <div class="topbar-right">
+            <a class="btn-logout" href="{% url 'usuarios' %}">
+                <i class="fa-solid fa-user"></i>
+                Usuarios
+            </a>
+
+            <a class="btn-logout" href="{% url 'dashboard' %}">
+                <i class="fa-solid fa-chart-line"></i>
+                Dashboard
+            </a>
+
+            <a class="btn-logout" href="{% url 'simula' %}">
+                <i class="fa-solid fa-location-dot"></i>
+                Simulación
+            </a>
+
+            <a class="btn-logout" href="{% url 'logout_views' %}">
+                <i class="fas fa-arrow-right-from-bracket"></i>
+                cerrar sesión
+            </a>
+        </div>
+    </header>
+
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="users-main">
+        <div class="users-grid">
+
+            <!-- PANEL IZQUIERDO: TABLA -->
+            <section class="users-card">
+                <div class="users-header">
+                    <div class="users-title-block">
+                        <h1 class="users-title">Bots registrados</h1>
+                        <p class="users-subtitle">Listado de bots gestionados en la plataforma TrafficZone.</p>
+                    </div>
+                    <div class="users-badge">
+                        <span class="dot"></span>
+                        {{total_bots}} bots
+                    </div>
+                </div>
+                <style>
+                    /* 1. Contenedor FLEX que ocupa todo el ancho */
+                    .users-filters {
+                        display: flex !important;
+                        width: 100% !important;
+                        align-items: center;
+                        gap: 10px;
+                        margin-bottom: 20px;
+                    }
+
+                    /* 2. Estilo del Botón Redondo, Verde y Pegado a la Derecha */
+                    .btn-round-add {
+                        /* LA MAGIA: Esto lo empuja totalmente a la derecha */
+                        margin-left: auto !important;
+
+                        /* Forma y Color */
+                        width: 45px;
+                        /* Ancho fijo */
+                        height: 45px;
+                        /* Alto igual al ancho */
+                        background-color: #08aa16 !important;
+                        /* Verde */
+                        border-radius: 50%;
+                        /* Círculo perfecto */
+
+                        /* Centrar el ícono */
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+
+                        /* Texto/Icono */
+                        color: #ffffff;
+                        text-decoration: none;
+                        font-size: 1.2rem;
+                        /* Tamaño del + */
+                        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                        transition: transform 0.2s, background-color 0.2s;
+                    }
+
+                    /* Efecto al pasar el mouse */
+                    .btn-round-add:hover {
+                        background-color: #059669;
+                        /* Verde más oscuro */
+                        transform: scale(1.05);
+                    }
+                </style>
+                <!-- Filtros tipo chips -->
+                <div class="users-filters">
+                    <button class="chip active">Todos</button>
+                    <button class="chip">Con suscripción</button>
+                    <a class="btn-round-add " href="{% url 'crear_bot' %}">
+                        <i class="fas fa-plus"></i>
+                    </a>
+                </div>
+
+
+                <!-- TABLA -->
+                <div class="users-table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Apellido</th>
+                                <th>Edad</th>
+                                <th>Cédula</th>
+                                <th>Género</th>
+                                <th>Activo</th>
+                                <th>Discapacidad</th>
+                                <th>Embarazo</th>
+                                <th>Suscripción</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for b in bots %}
+                            <tr>
+                                <td>{{b.nombre}}</td>
+                                <td>{{b.apellido}}</td>
+                                <td>{{b.edad}}</td>
+                                <td>{{b.cedula}}</td>
+                                <td>{{b.genero}}</td>
+                                <td>
+                                    {% if b.activo %}
+                                    <span class="status-pill verified"><span class="dot"></span> Activo</span>
+                                    {% else %}
+                                    <span class="status-pill blocked"><span class="dot"></span> Inactivo</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if b.discapacidad %}
+                                    Sí
+                                    {% else %}
+                                    No
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if b.embarazo %}
+                                    Sí
+                                    {% else %}
+                                    No
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if b.suscripcion %}
+                                    <span class="status-pill verified"><span class="dot"></span> Suscrito</span>
+                                    {% else %}
+                                    <span class="status-pill blocked"><span class="dot"></span> No suscrito</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <a href="{% url 'editarBot' b.id %}" class="btn-mini"><i
+                                                class="fas fa-pen"></i>Editar</a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- COLUMNA DERECHA -->
+            <section class="right-column">
+                <!-- RESUMEN DE BOTS -->
+                <div class="summary-card">
+                    <h2 class="summary-title">Resumen de Bots</h2>
+                    <div class="summary-grid">
+                        <div class="summary-item">
+                            <div class="summary-label">Total</div>
+                            <div class="summary-value">{{total_bots}}</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-label">Activos</div>
+                            <div class="summary-value">{{total_activos}}</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-label">Inactivos</div>
+                            <div class="summary-value">{{total_inactivos}}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FILTROS AVANZADOS -->
+                <form action="{% url 'bots' %}" method="POST">
+                    {% csrf_token %}
+                    <div class="filter-card">
+                        <h2 class="summary-title">Filtros avanzados</h2>
+
+                        <div class="filter-row">
+                            <label class="filter-label">Género</label>
+                            <select name="genero" class="filter-select">
+                                <option value="">Todos</option>
+                                <option value="M">Masculino</option>
+                                <option value="F">Femenino</option>
+                                <option value="O">Otro</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-row">
+                            <label class="filter-label">Estado</label>
+                            <select name="estado" class="filter-select">
+                                <option value="">Todos</option>
+                                <option value="1">Activo</option>
+                                <option value="0">Inactivo</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-row">
+                            <label class="filter-label">Suscripción</label>
+                            <select name="suscripcion" class="filter-select">
+                                <option value="">Todos</option>
+                                <option value="1">Suscrito</option>
+                                <option value="0">No suscrito</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-actions">
+                            <button type="reset" class="btn-filter secondary">Limpiar</button>
+                            <button type="submit" class="btn-filter primary">Aplicar filtros</button>
+                        </div>
+                    </div>
+                </form>
+            </section>
+        </div>
+    </main>
+
+</body>
+
+</html>

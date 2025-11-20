@@ -2,20 +2,18 @@ import os
 import uuid
 import random
 import base64
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.contrib.auth import login, authenticate
+from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.mail import send_mail
 from django.urls import reverse
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
-
 from deepface import DeepFace
 from django.contrib.auth.models import User
-
 from seguridad import models
 from seguridad.models import UsuarioRostro, UsuariosDatosPersonales, TipoUsuario
 
@@ -31,11 +29,99 @@ def logi(request):
 def correo(request):
     return render(request, "correo.html")
 
+def logout_views(request):
+    logout(request)
+    return redirect('home')
+
 @login_required
 def logueado(request):
-    return render(request, 'logueado.html')
+    usuario = request.user
+    print(usuario.id)
+    if usuario.is_superuser:
+        return render(request, 'dashboard.html', {'usuario' : usuario})
+    else:
+        usuario = models.UsuariosDatosPersonales.objects.get(usuario=usuario.id) 
+        return render(request, 'dashboard.html', {'usuario' : usuario})
 
-def logueo (request):
+@login_required
+def bots(request):
+    if request.method == "POST":
+        busqueda = request.POST.get("busqueda")
+        if busqueda:
+            bots = models.Bot.objects.filter(nombre__icontains=busqueda) | models.Bot.objects.filter(cedula__icontains=busqueda)
+        else:
+            bots = models.Bot.objects.all()
+    else:
+        bots = models.Bot.objects.all()
+
+    context = {
+        "bots": bots,
+        "total_bots": bots.count(),
+        "total_activos": bots.filter(activo=True).count(),
+        "total_inactivos": bots.filter(activo=False).count(),
+    }
+    return render(request, "botsVista.html", context)
+
+@login_required
+def crear_bot (request):
+    if request.method == "POST":
+        nombre = request.POST.get("nombre")
+        apellido = request.POST.get("apellido")
+        edad = request.POST.get("edad")
+        cedula = request.POST.get("cedula")
+        genero = request.POST.get("genero")
+
+        # Booleanos: vienen como "on" si están marcados
+        activo = request.POST.get("activo") == "on"
+        discapacidad = request.POST.get("discapacidad") == "on"
+        embarazo = request.POST.get("embarazo") == "on"
+        suscripcion = request.POST.get("suscripcion") == "on"
+
+        # Crear el Bot
+        models.Bot.objects.create(
+            nombre=nombre,
+            apellido=apellido,
+            edad=edad,
+            cedula=cedula,
+            genero=genero,
+            activo=activo,
+            discapacidad=discapacidad,
+            embarazo=embarazo,
+            suscripcion=suscripcion
+        )
+
+        messages.success(request, "✅ Bot creado exitosamente.")
+        return redirect("bots")  # Redirige a la vista de listado
+
+    return render(request, "bot_create.html")
+
+
+@login_required
+def editarBot(request, id):
+    bot = get_object_or_404(models.Bot, id=id)
+    if request.method == "POST":
+        bot.nombre = request.POST.get("nombre")
+        bot.apellido = request.POST.get("apellido")
+        bot.edad = request.POST.get("edad")
+        bot.cedula = request.POST.get("cedula")
+        bot.genero = request.POST.get("genero")
+
+        # Booleanos: checkboxes → "on" si están marcados
+        bot.activo = request.POST.get("activo") == "on"
+        bot.discapacidad = request.POST.get("discapacidad") == "on"
+        bot.embarazo = request.POST.get("embarazo") == "on"
+        bot.suscripcion = request.POST.get("suscripcion") == "on"
+
+        bot.save()
+        messages.success(request, "✅ Bot actualizado correctamente.")
+        return redirect("bots")  # Redirige al listado de Bots
+ 
+    context = {
+        "bot": bot
+    }
+    return render(request, "editarBot.html", context)
+
+def logueo(request):
     if request.method == 'POST':
         try:
             user = request.POST.get('nombre')
@@ -44,21 +130,22 @@ def logueo (request):
             print(f'{user} {contrasena}')
 
             usuario = authenticate(request, username=user, password=contrasena)
-            
 
             if usuario is not None:
                 login(request, usuario)
-                print (f'logueado con exito')
-                return redirect('logueado')
+                print('logueado con éxito')
+
+                # ✅ Captura el parámetro next
+                next_url = request.GET.get('next') or request.POST.get('next') or 'logueado'
+                return redirect(next_url)
             else:
-                print(f'{usuario}')
-                print(f'error al loguear')
+                print('error al loguear')
                 return redirect('login')
         except Exception as e:
-            print (f'el error es {e}')
-            return redirect ('login')
-
-
+            print(f'el error es {e}')
+            return redirect('login')
+    else:
+        return redirect('login')
 
 
 @csrf_exempt
@@ -82,7 +169,7 @@ def upload_photo(request):
             rostroUser = UsuarioRostro.objects.get(nombre_archivo=autorizado)
             usuario = rostroUser.usuario
             login(request, usuario)
-            return JsonResponse({"autorizado": True, "redirect_url": "/inicio/"})
+            return JsonResponse({"autorizado": True, "redirect_url": "/dashBoard/"})
         except UsuarioRostro.DoesNotExist:
             print(f"[INFO] No se encontró UsuarioRostro con foto: {autorizado}")
 
@@ -198,8 +285,76 @@ def aceptar_solicitud(request, token):
 
 @login_required
 def vistaUsuarios(request):
+    # Inicializamos variables
     usuarios_comunes = UsuariosDatosPersonales.objects.filter(tipo_usuario=TipoUsuario.COMUN)
-    return render(request, "usuariosVista.html", {'usuariosTotales':usuarios_comunes})
+    usuarios_totales = usuarios_comunes.count()
+    usuarios_verificados = UsuariosDatosPersonales.objects.filter(tipo_usuario=TipoUsuario.COMUN, estatus=True)
+    total_v = usuarios_verificados.count()
+    usuarios_sin_verificados = UsuariosDatosPersonales.objects.filter(tipo_usuario=TipoUsuario.COMUN, estatus=False)
+    total_sin_v = usuarios_sin_verificados.count()
+
+    resultados_busqueda = None
+    termino = None
+
+    if request.method == 'POST':
+        termino = request.POST.get('busqueda')
+        tipo = request.POST.get('tipo')
+        estado = request.POST.get('estado')
+
+        print(f'tipo: {tipo} estado: {estado}')
+
+        print(termino)
+        if termino:
+            # Filtramos por nombre o correo (ejemplo)
+            resultados_busqueda = UsuariosDatosPersonales.objects.filter(tipo_usuario=TipoUsuario.COMUN).filter(nombre__icontains=termino) |UsuariosDatosPersonales.objects.filter(tipo_usuario=TipoUsuario.COMUN).filter(usuario__email__icontains=termino)
+            print(type(resultados_busqueda))
+            for i in resultados_busqueda:
+                print (i.nombre)
+
+        if tipo and estado:
+            resultados_busqueda = models.UsuariosDatosPersonales.objects.filter(tipo_usuario=tipo, estatus=estado)
+            return render(request, "usuariosVista.html", {
+                'usuariosTotales': resultados_busqueda,
+                't': usuarios_totales,
+                'tv': total_v,
+                'tsv': total_sin_v,
+                'tr': resultados_busqueda.count()
+            }) 
+        elif tipo:
+            resultados_busqueda = models.UsuariosDatosPersonales.objects.filter(tipo_usuario=tipo)
+            return render(request, "usuariosVista.html", {
+                'usuariosTotales': resultados_busqueda,
+                't': usuarios_totales,
+                'tv': total_v,
+                'tsv': total_sin_v,
+                'tr': resultados_busqueda.count()
+            }) 
+        elif estado:
+            resultados_busqueda = models.UsuariosDatosPersonales.objects.filter(estatus=estado)
+            return render(request, "usuariosVista.html", {
+                'usuariosTotales': resultados_busqueda,
+                't': usuarios_totales,
+                'tv': total_v,
+                'tsv': total_sin_v,
+                'tr': resultados_busqueda.count()
+            }) 
+        else:
+            print('nada')
+            pass
+           
+    return render(request, "usuariosVista.html", {
+        'usuariosTotales': usuarios_comunes,
+        't': usuarios_totales,
+        'tv': total_v,
+        'tsv': total_sin_v,
+        'resultados': resultados_busqueda,
+        'termino': termino,
+        'tr': usuarios_comunes.count()
+    }) 
+
+@login_required
+def dashboard (request):
+    return render(request, 'dashboard.html')
 
 @login_required
 def usuariosCrear(request):
@@ -213,6 +368,8 @@ def usuariosCrear(request):
             apellido = request.POST.get('apellido')
             cedula = request.POST.get('cedula')
 
+            avatar = nombre[0] + apellido[0]
+            print(avatar)
             print(f'{clave} {clave1}')
 
             if clave != clave1:
@@ -310,6 +467,7 @@ def usuariosCrear(request):
                         apellido=apellido,
                         cedula=cedula,
                         tipo_usuario=tipo_usuario,
+                        avatar = avatar
                     ).save()
 
                     UsuarioRostro.objects.create(
@@ -354,6 +512,7 @@ def editar_user (request):
             print("📋 DATOS RECIBIDOS DEL FORMULARIO:")
             print("=" * 50)
             print(f"👤 Username: '{username}'")
+            print(f"👤 id: '{id}'")
             print(f"📛 Nombre: '{nombre}'")
             print(f"📛 Apellido: '{apellido}'")
             print(f"📧 Correo: '{correo}'")
@@ -382,8 +541,9 @@ def editar_user (request):
                 username = username,
                 email = correo,
             )
+
             messages.info(request, 'usuario editado correctamente')
-            return redirect('usuario')
+            return redirect('usuarios')
         
         except Exception as e:
             print(f'el error es: {e}')
@@ -392,27 +552,23 @@ def editar_user (request):
 
 
 @login_required
-def editarUsuario(request):
-    if request.method == 'POST':
-        try:
-            identificador = request.POST.get('id')
-            print(f'identificado {identificador}')
-            id = int (identificador)
-            print(f'id = {type(id)}')
-            usuario = User.objects.get(id=id)
-            print(usuario)
-            datos = models.UsuariosDatosPersonales.objects.get(usuario = id)
-            print('----------------')
-            print(usuario.username)
-            return render(request, 'editarUsuario.html', {"u":usuario,
-                                                          'd':datos,},)
-
+def editarUsuario(request, id_request):
+    try:
+        identificador = id_request
+        print(f'identificado {identificador}')
+        id = int (identificador)
+        print(f'id = {type(id)}')
+        usuario = User.objects.get(id=id)
+        print(usuario)
+        datos = models.UsuariosDatosPersonales.objects.get(usuario = id)
+        print('----------------')
+        print(usuario.username)
+        return render(request, 'editarUsuario.html', {"u":usuario,
+                                                        'd':datos,},)
             
-        except Exception as e:
-            print (f'esto es: {e}')
-            return redirect ('usuarios')
-    else:
-        print(f'error')
-        return redirect ('usuarios') 
+    except Exception as e:
+        print (f'esto es: {e}')
+        return redirect ('usuarios')
+    
         
 

@@ -1,0 +1,89 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>TrafficZone - Registro Bot</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="{% static 'css/editar_user.css' %}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <header class="navbar">
+    <div class="logo">TrafficZone</div>
+    <nav class="nav-links">
+      <a class="btn-logout" href="{% url 'bots' %}">Volver</a>
+    </nav>
+  </header>
+
+  <!-- SECCIÓN REGISTRO -->
+  <section class="register-hero">
+    <div class="register-card">
+      <div class="register-subtitle">BIENVENIDO AL</div>
+      <h1 class="register-title">REGISTRO DE BOT</h1>
+
+      {% if messages %}
+        {% for i in messages %}
+          <p>{{ i }}</p>
+        {% endfor %}
+      {% endif %}
+
+      <form class="register-form" method="POST">
+        {% csrf_token %}
+
+        <!-- NOMBRE -->
+        <div class="input-group">
+          <i class="fas fa-user"></i>
+          <input type="text" required name="nombre" class="field" placeholder="Nombre">
+        </div>
+
+        <!-- APELLIDO -->
+        <div class="input-group">
+          <i class="fas fa-user"></i>
+          <input type="text" required name="apellido" class="field" placeholder="Apellido">
+        </div>
+
+        <!-- EDAD -->
+        <div class="input-group">
+          <i class="fas fa-calendar"></i>
+          <input type="number" required name="edad" class="field" placeholder="Edad">
+        </div>
+
+        <!-- CÉDULA -->
+        <div class="input-group">
+          <i class="fas fa-id-card"></i>
+          <input type="text" required name="cedula" class="field" placeholder="Cédula">
+        </div>
+
+        <!-- GÉNERO -->
+        <div class="input-group">
+          <i class="fas fa-venus-mars"></i>
+          <select name="genero" class="field" required>
+            <option value="">Seleccione género</option>
+            <option value="Masculino">Masculino</option>
+            <option value="Femenino">Femenino</option>
+            <option value="Otro">Otro</option>
+          </select>
+        </div>
+
+        <!-- CHECKBOXES -->
+        <div class="register-row">
+          <label><input type="checkbox" name="activo" checked> Activo</label>
+          <label><input type="checkbox" name="discapacidad"> Discapacidad</label>
+          <label><input type="checkbox" name="embarazo"> Embarazo</label>
+          <label><input type="checkbox" name="suscripcion" checked> Suscripción</label>
+        </div>
+
+        <button type="submit" class="btn-primary">Registrar Bot</button>
+      </form>
+
+      <div class="register-footer">
+        <a href="{% url 'bots' %}">Ver listado de Bots</a>
+      </div>
+    </div>
+  </section>
+
+</body>
+</html>

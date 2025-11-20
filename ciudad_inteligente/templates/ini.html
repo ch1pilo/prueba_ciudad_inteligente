@@ -1,42 +1,52 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{% static 'css/styleinicio.css' %}">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+
     <title>TrafficZone</title>
 </head>
+
 <body>
 
-<header class="navbar">
-<div class="logo">TrafficZone</div>
+    <header class="navbar">
+        <div class="logo">TrafficZone</div>
 
-<nav class="nav-links">
-    <a href="#" class="active">INICIO</a>
-    <a href="{% url 'login' %}" aria-label="login">Login</a>
-    <a href="{% url 'usuarios' %}">Crear usuario</a>
-</nav>
-</header>
+        <nav class="nav-links" id="navLinks">
+            <a href="{% url 'home' %}">INICIO</a>
+            <a href="{% url 'rutas' %}" aria-label="login">Vista rutas</a>
+            <a href="{% url 'login' %}" aria-label="login">Login</a>
+        </nav>
 
-<!-- HERO -->
-<section class="hero">
+        <button class="hamburger-icon" onclick="toggleMenu()">
+            <i class="fas fa-bars"></i>
+        </button>
+    </header>
 
-    <!-- IMAGEN PRINCIPAL -->
-    <img 
-        class="hero-img"
-        src="https://i.ibb.co/qY1FrLq5/prueba-traficc.png"
-        alt="Ruta Segura">
+    <section class="hero">
+        <img class="hero-img" src="https://i.ibb.co/qY1FrLq5/prueba-traficc.png" alt="Ruta Segura">
 
-    <!-- TEXTOS -->
-    <span class="tag tag-top">Rastrea</span>
-    <span class="tag tag-left">Planifica</span>
-    <span class="tag tag-right">Viaja con<br>comodidad</span>
+        <span class="tag tag-top">Rastrea</span>
+        <span class="tag tag-left">Planifica</span>
+        <span class="tag tag-right">Viaja con<br>comodidad</span>
 
-    <!-- BULLET -->
-    <ul class="hero-bullets">
-        <li>Tu Bus, en Tiempo Real.</li>
-    </ul>
-</section>
+        <ul class="hero-bullets">
+            <li>Tu Bus, en Tiempo Real.</li>
+        </ul>
+    </section>
+
+    <script>
+        function toggleMenu() {
+            const navLinks = document.getElementById('navLinks');
+            navLinks.classList.toggle('show');
+        }
+    </script>
+
 </body>
+
 </html>

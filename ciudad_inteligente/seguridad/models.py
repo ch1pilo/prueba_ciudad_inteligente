@@ -39,8 +39,9 @@ class UsuariosDatosPersonales(models.Model):
     apellido=models.CharField(max_length=200)
     cedula=models.CharField(max_length=200)
     estatus = models.BooleanField(default=True)
+    avatar = models.CharField(max_length=50)
     tipo_usuario = models.CharField(
-        max_length=5,
+        max_length=20,
         choices=TipoUsuario.choices,
         default=TipoUsuario.COMUN
     )

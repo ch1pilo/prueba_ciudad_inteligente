@@ -1,0 +1,387 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>TrafficZone - Simulador</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="{% static 'css/styleusuarioVista.css' %}">
+    <link rel="stylesheet" href="{% static 'css/styleSimulacion.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+</head>
+
+<body>
+    <header class="topbar">
+        <div class="topbar-left">TrafficZone</div>
+
+        <div class="topbar-right">
+            <a class="btn-logout" href="{% url 'usuarios' %}">
+                <i class="fa-solid fa-user"></i>
+                Usuarios
+            </a>
+            
+
+            <a class="btn-logout" href="{% url 'bots' %}">
+                <i class="fa-solid fa-robot"></i>
+                Bots
+            </a>
+
+            <a class="btn-logout" href="{% url 'dashboard' %}">
+                <i class="fa-solid fa-chart-line"></i>
+                Dashboard
+            </a>
+
+            <a class="btn-logout" href="{% url 'logout_views' %}">
+                <i class="fas fa-arrow-right-from-bracket"></i>
+                cerrar sesión
+            </a>
+        </div>
+    </header>
+
+    <main class="sim-main">
+        <div class="sim-grid">
+            <section class="map-card">
+                <div id="map"></div>
+            </section>
+
+            <section class="right-column">
+
+                <div class="right-top">
+                    <div class="card-pill blue">
+                        <div>
+                            <div class="card-pill-label" id="lbl-top-1">Seleccionado</div>
+                            <div class="card-pill-value" id="ui-selected-name">--</div>
+                        </div>
+                        <div class="card-pill-icon"><i class="fas fa-info-circle"></i></div>
+                    </div>
+                    <div class="card-pill">
+                        <div>
+                            <div class="card-pill-label" id="lbl-top-2">Estado</div>
+                            <div class="card-pill-value" id="ui-status">--</div>
+                        </div>
+                        <div class="card-pill-arrow"><i class="fas fa-map-marker-alt"></i></div>
+                    </div>
+                </div>
+
+                <div class="bus-carousel-container">
+                    <div class="card-pill-label" style="margin-bottom: 8px; color: #6b7280;">Flota Activa</div>
+                    <div class="bus-scroll-area" id="bus-list-container"></div>
+                </div>
+
+                <div class="stats-column">
+                    <div class="stat-card">
+                        <div class="stat-card-label" id="lbl-stat-1">Pasajeros</div>
+                        <div class="stat-card-value" id="ui-stat-1">0</div>
+                    </div>
+                    <div class="stat-card" id="card-seats">
+                        <div class="stat-card-label">Disponibles</div>
+                        <div class="stat-card-value" id="ui-stat-2">30</div>
+                    </div>
+                </div>
+
+                <div class="passengers-panel">
+                    <div class="passengers-header" id="ui-list-header">
+                        <span>Manifiesto</span>
+                        <i class="fas fa-users text-gray-400"></i>
+                    </div>
+                    <div class="passengers-content-scroll" id="ui-passenger-list-container">
+                        <div class="empty-state">Selecciona un Bus o Parada</div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    {{ pasajeros_json|json_script:"data-pasajeros" }}
+    {{ paradas_json|json_script:"data-paradas" }}
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/@turf/turf/turf.min.js"></script>
+
+    <script>
+        // --- VARIABLES ---
+        const activeBuses = [];
+        let globalParadasFeatures = [];
+        let selectedType = null;
+        let selectedId = null;
+        const MAX_SEATS = 30;
+
+        // --- CONFIGURACIÓN ---
+        const rutasConfig = [
+            { url: "{% static 'rutas/capa_milagros.geojson' %}", color: "blue", id: 1, name: "Milagros" },
+            { url: "{% static 'rutas/capa_delicias.geojson' %}", color: "red", id: 2, name: "Delicias" },
+            { url: "{% static 'rutas/capa_julio.geojson' %}", color: "green", id: 3, name: "Julio" }
+        ];
+
+        const map = L.map('map').setView([10.64, -71.61], 14);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: 'OSM' }).addTo(map);
+
+        const busIcon = L.icon({ iconUrl: "{% static 'img/bus.png' %}", iconSize: [44, 44], iconAnchor: [22, 44] });
+        const paradaIcon = L.icon({ iconUrl: "{% static 'img/parada.png' %}", iconSize: [28, 28], iconAnchor: [14, 28] });
+
+        // --- HELPERS ---
+        function shuffle(a) { for (let i = a.length; i; i--) { let j = Math.floor(Math.random() * i);[a[i - 1], a[j]] = [a[j], a[i - 1]]; } return a; }
+        function getInitials(n, a) { return ((n ? n[0] : '') + (a ? a[0] : '')).toUpperCase(); }
+        function estaCercaDeParada(pt, paradas) { return paradas.find(p => turf.distance(pt, turf.point(p.coords), { units: 'meters' }) < 25); }
+
+        // --- API ---
+        async function registrarFacturaAPI(botId, rutaId, paradaId, accion) {
+            const url = '/api/registrar-factura/';
+            const data = { bot_id: botId, rutas_id: rutaId, parada_id: paradaId, accion: accion };
+            try {
+                await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+            } catch (error) { console.error(error); }
+        }
+
+        // --- UI ---
+        function renderBusList() {
+            const container = document.getElementById('bus-list-container');
+            container.innerHTML = '';
+            activeBuses.forEach((bus) => {
+                const btn = document.createElement('div');
+                const isActive = (selectedType === 'BUS' && selectedId === bus.id);
+                btn.className = `bus-card ${isActive ? 'active' : ''}`;
+                btn.onclick = () => selectBus(bus.id);
+                btn.innerHTML = `<i class="fas fa-bus" style="font-size:1.3rem"></i>
+                             <div style="font-weight:600; font-size:0.8rem">${bus.name}</div>
+                             <div style="font-size:0.65rem; opacity:0.8">${bus.routeColor.toUpperCase()}</div>`;
+                container.appendChild(btn);
+            });
+        }
+
+        function selectBus(id) { selectedType = 'BUS'; selectedId = id; renderBusList(); updateDashboardUI(); }
+        function selectStop(id) { selectedType = 'STOP'; selectedId = id; renderBusList(); updateDashboardUI(); }
+
+        function updateDashboardUI() {
+            const lbl1 = document.getElementById('lbl-top-1');
+            const val1 = document.getElementById('ui-selected-name');
+            const lbl2 = document.getElementById('lbl-top-2');
+            const val2 = document.getElementById('ui-status');
+            const lblStat = document.getElementById('lbl-stat-1');
+            const valStat = document.getElementById('ui-stat-1');
+            const valStat2 = document.getElementById('ui-stat-2');
+            const cardSeats = document.getElementById('card-seats');
+            const header = document.getElementById('ui-list-header');
+            const listContainer = document.getElementById('ui-passenger-list-container');
+
+            listContainer.innerHTML = '';
+
+            if (selectedType === 'BUS') {
+                const bus = activeBuses.find(b => b.id === selectedId);
+                if (!bus) return;
+
+                header.classList.remove('stop-mode-header');
+                cardSeats.style.display = 'grid';
+
+                lbl1.innerText = "Bus"; val1.innerText = bus.name;
+                lbl2.innerText = "Próxima"; val2.innerText = bus.nextStopName;
+                lblStat.innerText = "A Bordo"; valStat.innerText = bus.marker.pasajeros.length;
+                valStat2.innerText = MAX_SEATS - bus.marker.pasajeros.length;
+
+                const div = document.createElement('div');
+                div.innerHTML = `<div class="list-section-title">Pasajeros (${bus.marker.pasajeros.length})</div>`;
+                bus.marker.pasajeros.forEach(p => div.appendChild(createPassengerRow(p, 'BUS', '#dcfce7', '#166534')));
+                listContainer.appendChild(div);
+
+            } else if (selectedType === 'STOP') {
+                const stop = globalParadasFeatures.find(f => f.properties.id === selectedId);
+                if (!stop) return;
+
+                header.classList.add('stop-mode-header');
+                cardSeats.style.display = 'none';
+
+                const rutaInfo = rutasConfig.find(r => r.id === stop.properties.ruta_id);
+                const nombreRuta = rutaInfo ? rutaInfo.name : "ID " + stop.properties.ruta_id;
+
+                lbl1.innerText = "Parada"; val1.innerText = stop.properties.name;
+                lbl2.innerText = "Ruta"; val2.innerText = nombreRuta;
+
+                const waiting = stop.properties.assignedUsers || [];
+                lblStat.innerText = "Esperando"; valStat.innerText = waiting.length;
+
+                const div = document.createElement('div');
+                div.innerHTML = `<div class="list-section-title" style="background:#fef3c7; color:#92400e">Cola de Espera</div>`;
+                if (waiting.length === 0) div.innerHTML += `<div class="empty-state">Sin pasajeros</div>`;
+                else waiting.forEach(p => div.appendChild(createPassengerRow(p, 'WAIT', '#fef3c7', '#92400e')));
+                listContainer.appendChild(div);
+            }
+        }
+
+        function createPassengerRow(p, type, bg, color) {
+            const div = document.createElement('div');
+            div.className = 'passenger-item';
+            const label = type === 'BUS' ? 'AB' : 'ESP';
+            div.innerHTML = `
+            <div class="passenger-avatar" style="background:${bg}; color:${color}">${getInitials(p.nombre, p.apellido)}</div>
+            <div style="flex:1"><div style="font-weight:600">${p.nombre} ${p.apellido || ''}</div>
+            <div style="font-size:0.7rem; color:#6b7280">ID: ${p.id}</div></div>
+            <span style="font-size:0.7rem; font-weight:700; color:${color}">${label}</span>`;
+            return div;
+        }
+
+        // --- ANIMACIÓN (ORIGINAL FLUIDA) ---
+        function animarRuta(coords, busObj, paradas, color, onHalfwayCallback = null, rutaId) {
+            let i = 0;
+            const velocidad = 200 / 3.6;
+            let enPausa = false;
+            let ultimoStopTime = 0;
+            const marker = busObj.marker;
+            marker.pasajeros = [];
+            const halfwayIndex = Math.floor(coords.length / 2);
+            let halfwayTriggered = false;
+
+            busObj.nextStopName = paradas.length ? paradas[0].name : "?";
+
+            function mover() {
+                if (i < coords.length - 1) {
+                    const p1 = turf.point(coords[i]);
+                    const p2 = turf.point(coords[i + 1]);
+                    const dist = turf.distance(p1, p2, { units: 'meters' });
+                    const duracion = Math.max(dist / velocidad * 1000, 300);
+
+                    let inicio = Date.now();
+                    function paso() {
+                        if (enPausa) return;
+
+                        const progreso = (Date.now() - inicio) / duracion;
+                        if (progreso < 1) {
+                            const interp = turf.along(turf.lineString([coords[i], coords[i + 1]]), progreso * dist, { units: 'meters' });
+                            marker.setLatLng([interp.geometry.coordinates[1], interp.geometry.coordinates[0]]);
+
+                            const puntoActual = turf.point(interp.geometry.coordinates);
+                            const paradaCercana = estaCercaDeParada(puntoActual, paradas);
+
+                            if (paradaCercana && (Date.now() - ultimoStopTime > 3000)) {
+                                // --- PARADA DETECTADA ---
+                                enPausa = true;
+                                busObj.currentStopName = paradaCercana.name;
+                                const cIdx = paradas.indexOf(paradaCercana);
+                                busObj.nextStopName = paradas[(cIdx + 1) % paradas.length].name;
+
+                                if (selectedType === 'BUS' && selectedId === busObj.id) updateDashboardUI();
+
+                                // Lógica Pasajeros
+                                let bajando = [];
+                                let subiendo = [];
+
+                                marker.pasajeros.forEach(p => { if (Math.random() < 0.3) bajando.push(p); });
+
+                                let esperando = paradaCercana.properties.assignedUsers || [];
+                                esperando.forEach(p => {
+                                    if (marker.pasajeros.length < MAX_SEATS && Math.random() < 0.5) subiendo.push(p);
+                                });
+
+                                // Inserción API y Actualización de Arrays
+                                bajando.forEach(p => {
+                                    marker.pasajeros = marker.pasajeros.filter(u => u.id !== p.id);
+                                    paradaCercana.properties.assignedUsers.push(p);
+                                    registrarFacturaAPI(p.id, rutaId, paradaCercana.properties.id, 'SALIDA');
+                                });
+
+                                subiendo.forEach(p => {
+                                    if (p.suscripcion !== false) {
+                                        paradaCercana.properties.assignedUsers = paradaCercana.properties.assignedUsers.filter(u => u.id !== p.id);
+                                        marker.pasajeros.push(p);
+                                        registrarFacturaAPI(p.id, rutaId, paradaCercana.properties.id, 'ENTRADA');
+                                    }
+                                });
+
+                                marker.bindTooltip(`<b>${paradaCercana.name}</b><br>Bajaron: ${bajando.length}<br>Subieron: ${subiendo.length}`, { permanent: true, direction: 'top' }).openTooltip();
+
+                                // Refrescar Panel si estamos viendo este bus o parada
+                                if (selectedType === 'BUS' && selectedId === busObj.id) updateDashboardUI();
+                                if (selectedType === 'STOP' && selectedId === paradaCercana.properties.id) updateDashboardUI();
+
+                                const progActual = progreso;
+                                setTimeout(() => {
+                                    marker.unbindTooltip();
+                                    enPausa = false;
+                                    ultimoStopTime = Date.now();
+                                    inicio = Date.now() - progActual * duracion;
+                                    busObj.currentStopName = "En camino";
+                                    if (selectedType === 'BUS' && selectedId === busObj.id) updateDashboardUI();
+                                    setTimeout(paso, 16);
+                                }, 3000);
+                                return;
+                            }
+                            setTimeout(paso, 16);
+                        } else {
+                            marker.setLatLng([coords[i + 1][1], coords[i + 1][0]]);
+                            i++;
+                            if (!halfwayTriggered && i === halfwayIndex && onHalfwayCallback) {
+                                onHalfwayCallback(); halfwayTriggered = true;
+                            }
+                            mover();
+                        }
+                    }
+                    setTimeout(paso, 16);
+                } else {
+                    i = 0; setTimeout(mover, 1000);
+                }
+            }
+            L.geoJSON({ type: "LineString", coordinates: coords }, { color }).addTo(map);
+            mover();
+        }
+
+        // --- INIT ---
+        async function init() {
+            let users = [], stops = [];
+            try {
+                users = JSON.parse(document.getElementById('data-pasajeros').textContent);
+                stops = JSON.parse(document.getElementById('data-paradas').textContent);
+            } catch (e) { }
+
+            globalParadasFeatures = stops.map(p => {
+                try {
+                    const pt = p.coordenada.split(',');
+                    return { type: "Feature", properties: { id: p.id, name: p.nombre, ruta_id: p.ruta_id, assignedUsers: [] }, geometry: { type: "Point", coordinates: [parseFloat(pt[1]), parseFloat(pt[0])] } };
+                } catch (e) { return null; }
+            }).filter(Boolean);
+
+            const shuf = shuffle([...users]);
+            shuf.forEach(u => {
+                if (globalParadasFeatures.length) globalParadasFeatures[Math.floor(Math.random() * globalParadasFeatures.length)].properties.assignedUsers.push(u);
+            });
+
+            globalParadasFeatures.forEach(f => {
+                const m = L.marker([f.geometry.coordinates[1], f.geometry.coordinates[0]], { icon: paradaIcon }).addTo(map);
+                m.on('click', () => selectStop(f.properties.id));
+            });
+
+            const res = await Promise.all(rutasConfig.map(r => fetch(r.url).then(res => res.json())));
+
+            res.forEach((d, idx) => {
+                const conf = rutasConfig[idx];
+                const line = d.features.find(f => f.geometry.type === "LineString");
+                if (!line) return;
+                const coords = line.geometry.coordinates;
+                const pRuta = globalParadasFeatures.filter(f => f.properties.ruta_id === conf.id);
+                const pAnim = pRuta.map(f => ({ coords: f.geometry.coordinates, name: f.properties.name, properties: f.properties }));
+
+                const spawn = (suf) => {
+                    const m = L.marker([coords[0][1], coords[0][0]], { icon: busIcon }).addTo(map);
+                    const obj = { id: `b-${conf.id}-${suf}`, name: `Bus ${conf.name} ${suf}`, routeColor: conf.color, marker: m, currentStopName: "Salida", nextStopName: pAnim.length ? pAnim[0].name : "?", rutaId: conf.id };
+                    activeBuses.push(obj);
+                    m.on('click', () => selectBus(obj.id));
+                    return obj;
+                };
+
+                const b1 = spawn("01");
+                animarRuta(coords, b1, pAnim, conf.color, () => {
+                    const b2 = spawn("02");
+                    renderBusList();
+                    animarRuta(coords, b2, pAnim, conf.color, null, conf.id);
+                }, conf.id);
+            });
+            renderBusList();
+        }
+        init();
+    </script>
+</body>
+
+</html>

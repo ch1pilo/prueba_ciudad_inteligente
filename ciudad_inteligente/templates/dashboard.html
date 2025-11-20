@@ -1,0 +1,500 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>TrafficZone - Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Fuente Poppins -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Iconos -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/styleDashBoard.css' %}">
+</head>
+<body>
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="topbar-left">TrafficZone</div>
+
+
+    <div class="topbar-right">
+        <a class="btn-logout" href="{% url 'usuarios' %}">
+            <i class="fa-solid fa-user"></i>
+            Usuarios
+        </a>
+
+        <a class="btn-logout" href="{% url 'bots' %}">
+            <i class="fa-solid fa-robot"></i>
+            Bots
+        </a>
+
+        <a class="btn-logout" href="{% url 'simula' %}">
+            <i class="fa-solid fa-location-dot"></i>
+            Simulación
+        </a>
+
+        <a class="btn-logout" href="{% url 'logout_views' %}">
+            <i class="fas fa-arrow-right-from-bracket"></i>
+            cerrar sesión
+        </a>
+    </div>
+  </header>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="dash-main">
+    <h1 class="dash-title">DASHBOARD</h1>
+
+    <section class="dash-card">
+
+      <!-- RESUMEN GENERAL -->
+      <h2 class="section-title">Resumen general</h2>
+
+      <div class="summary-grid">
+        <div class="summary-card">
+          <div class="summary-label">Buses activos</div>
+          <div class="summary-value">2</div>
+          <div class="summary-extra">Monitoreados en tiempo real</div>
+        </div>
+
+        <div class="summary-card">
+          <div class="summary-label">Paradas monitoreadas</div>
+          <div class="summary-value">2</div>
+          <div class="summary-extra">En la ruta seleccionada</div>
+        </div>
+
+        <div class="summary-card">
+          <div class="summary-label">Pasajeros a bordo</div>
+          <div class="summary-value">30</div>
+          <div class="summary-extra">Total aproximado</div>
+        </div>
+
+        <div class="summary-card">
+          <div class="summary-label">Porcentaje promedio</div>
+          <div class="summary-value">75%</div>
+          <div class="summary-extra">Ocupación de la flota</div>
+        </div>
+      </div>
+
+      <!-- AÑADO AQUÍ LAS METRICAS (se integran sin quitar nada existente) -->
+      <div class="metricas-row" id="metricasRow">
+        <div class="met-card">
+          <div class="met-label">Ruta más concurrida</div>
+          <div class="met-value" id="met_ruta">-</div>
+        </div>
+        <div class="met-card">
+          <div class="met-label">Hora pico</div>
+          <div class="met-value" id="met_hora">-</div>
+        </div>
+        <div class="met-card">
+          <div class="met-label">Tickets hoy</div>
+          <div class="met-value" id="met_tickets">-</div>
+        </div>
+        <div class="met-card">
+          <div class="met-label">Pasajeros discapacitados</div>
+          <div class="met-value" id="met_disc">-</div>
+        </div>
+      </div>
+
+      <!-- ESTADO ACTUAL DE BUSES -->
+      <div class="status-card">
+        <div class="status-header">
+          <div>
+            <div class="section-title" style="margin-bottom:4px;">Estado actual de buses</div>
+            <div class="status-bus-info">
+              <span>A-001-B</span>
+              <span class="secondary">Velocidad: 45 Km/h · Pasajeros: 25 / 40</span>
+            </div>
+          </div>
+          <div class="route-label">Ruta-101</div>
+        </div>
+
+        <!-- Lista de los 6 buses (scrollable verticalmente)-->
+        <div class="buses-list" id="busesList">
+        </div>
+
+        <div class="progress-bar-wrapper">
+          <div class="progress-bar"></div>
+        </div>
+      </div>
+</div> <!-- cierre de metricas-row -->
+{% if usuario == administrador or usuario.is_superuser %}
+<button id="btnReporte" 
+        style="margin-top:20px; padding:10px 18px; background:#0a1ccf; color:white; border:none; 
+               border-radius:8px; cursor:pointer; font-weight:600;">
+    Generar Reporte
+</button>
+{% endif %}
+
+      <!-- GRÁFICOS -->
+      <div class="charts-row">
+
+        <!-- Gráfico de línea -->
+        <div class="chart-card">
+          <div class="chart-title">Velocidad del bus</div>
+          <div class="chart-subtitle">Evolución durante el día</div>
+          <div class="chart-placeholder line" style="padding:12px;">
+            <canvas id="chartVelocidad" style="width:100%;height:220px;"></canvas>
+          </div>
+        </div>
+
+        <!-- Gráfico de barras -->
+        <div class="chart-card">
+          <div class="chart-title">Pasajeros por parada</div>
+          <div class="chart-subtitle">Distribución en cada punto de la ruta</div>
+          <div class="chart-placeholder bar" style="padding:12px;">
+            <canvas id="chartParadas" style="width:100%;height:220px;"></canvas>
+          </div>
+        </div>
+
+        <!-- Gráfico de pastel -->
+        <div class="chart-card">
+          <div class="chart-title">Ocupación por zona</div>
+          <div class="chart-subtitle">Porcentaje de pasajeros por sector</div>
+          <div class="chart-placeholder pie" style="padding:12px;">
+            <canvas id="chartOcupacion" style="width:100%;height:220px;"></canvas>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+  </main>
+<!-- Librerías para reporte -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+/*
+  - Muestra los 6 buses en la sección 'Estado actual', manteniendo estilo.
+  - Hace la lista de buses scrolleable verticalmente.
+  - Usa Metricas para llenar tarjetas nuevas (ruta, hora pico, tickets, discapacitados).
+  - Implementa 3 gráficos reales (velocidad: simulado, paradas: datos reales, ocupación: met.ruta/tickets).
+  - Calcula "Pasajeros a bordo" estimado distribuyendo el conteo de paradas entre buses proporcional a su capacidad.
+  - Calcula "Porcentaje promedio" = (totalPasajeros / capacidadTotal) * 100.
+  - Actualiza el resumen general existente (las 4 tarjetas) con valores calculados.
+  - Actualiza cada 5 segundos.
+*/
+
+const API_URL = "http://18.224.172.98:3000/dashboard-data"; 
+
+let chartVelocidad = null;
+let chartParadas = null;
+let chartOcupacion = null;
+
+function safeNumber(v){ return typeof v === 'number' && !isNaN(v) ? v : 0; }
+
+async function fetchData(){
+  try {
+    const res = await fetch(API_URL, {cache: "no-store"});
+    if(!res.ok) throw new Error("HTTP " + res.status);
+    const json = await res.json();
+    return json;
+  } catch (err) {
+    console.error("Error fetching dashboard-data:", err);
+    return null;
+  }
+}
+
+function distributePassengersToBuses(buses, totalPeople){
+
+  const capacities = buses.map(b => safeNumber(b.capacidad_total));
+  const capacityTotal = capacities.reduce((a,b)=>a+b,0) || 1;
+  let assigned = buses.map((b, i) => Math.round(totalPeople * capacities[i] / capacityTotal));
+
+
+  let sumAssigned = assigned.reduce((a,b)=>a+b,0);
+  let diff = totalPeople - sumAssigned;
+  let idx = 0;
+  while(diff !== 0){
+    assigned[idx % assigned.length] += (diff > 0 ? 1 : -1);
+    diff = totalPeople - assigned.reduce((a,b)=>a+b,0);
+    idx++;
+    if(idx>1000) break;
+  }
+  return assigned;
+}
+
+function formatDateISO(s){
+  try {
+    const d = new Date(s);
+    if(isNaN(d)) return s;
+    return d.toLocaleString();
+  } catch(e){ return s; }
+}
+
+async function renderDashboard(){
+  const data = await fetchData();
+  if(!data) return;
+
+  const buses = Array.isArray(data.Estado_Actual_Buses) ? data.Estado_Actual_Buses : [];
+  const paradas = Array.isArray(data.Estado_Actual_Paradas) ? data.Estado_Actual_Paradas : [];
+  const met = data.Metricas || {};
+
+  // -------- METRICAS --------
+  document.getElementById("met_ruta").textContent = met.ruta_mas_concurrida_hoy || "-";
+  document.getElementById("met_hora").textContent = (typeof met.hora_pico_hoy !== 'undefined') ? (met.hora_pico_hoy + ":00") : "-";
+  document.getElementById("met_tickets").textContent = met.total_tickets_hoy ?? "-";
+  document.getElementById("met_disc").textContent = met.total_pasajeros_discapacitados_hoy ?? "-";
+
+  // -------- CÁLCULOS--------
+  const totalPeopleFromStops = paradas.reduce((sum,p)=> sum + (safeNumber(p.conteo_estimado_personas)), 0);
+
+  const totalCapacity = buses.reduce((sum,b)=> sum + safeNumber(b.capacidad_total), 0);
+  const passengersPerBus = distributePassengersToBuses(buses, totalPeopleFromStops);
+
+  const totalPassengers = passengersPerBus.reduce((a,b)=>a+b,0);
+  const percentAvg = totalCapacity > 0 ? Math.round((totalPassengers / totalCapacity) * 100) : 0;
+
+  const summaryEls = document.querySelectorAll(".summary-value");
+  if(summaryEls.length >= 4){
+    summaryEls[0].textContent = buses.length; // Buses activos
+    summaryEls[1].textContent = paradas.length; // Paradas
+    summaryEls[2].textContent = totalPassengers; // Pasajeros a bordo (estimado)
+    summaryEls[3].textContent = percentAvg + "%"; // Porcentaje promedio
+  }
+
+  // -------- RENDER LISTA DE BUSES (6 buses) --------
+  const listEl = document.getElementById("busesList");
+  listEl.innerHTML = ""; // limpio lista antes de render
+
+  buses.forEach((bus, idx) => {
+    const assigned = passengersPerBus[idx] ?? 0;
+    const cap = safeNumber(bus.capacidad_total);
+    const avancePct = cap > 0 ? Math.round((assigned / cap) * 100) : 0;
+    const lastUpd = formatDateISO(bus.ultima_actualizacion);
+
+    const item = document.createElement("div");
+    item.className = "bus-item";
+
+    item.innerHTML = `
+      <div class="bus-info">
+        <div class="bus-placa">${bus.placa || bus._id || ("Bus " + (idx+1))}</div>
+        <div class="bus-meta">Ruta: <strong>${bus.ruta_actual_id || '-'}</strong> · Capacidad: <strong>${cap}</strong></div>
+        <div class="bus-meta">Pasajeros estimados: <strong>${assigned}</strong></div>
+        <div class="bus-meta" style="font-size:0.8rem;color:#6b7280">Última actualización: ${lastUpd}</div>
+      </div>
+      <div class="bus-progress">
+        <div style="font-size:0.85rem;color:#4b5563;margin-bottom:6px;text-align:right">${avancePct}%</div>
+        <div class="mini-progress"><div class="mini-fill" style="width:${Math.min(Math.max(avancePct,0),100)}%"></div></div>
+      </div>
+    `;
+
+    listEl.appendChild(item);
+  });
+
+  // -------- ACTUALIZAR HEADER DEL BLOQUE --------
+  if(buses.length > 0){
+    const firstBus = buses[0];
+    const firstAssigned = passengersPerBus[0] ?? 0;
+    const firstMetaEl = document.querySelector(".status-bus-info");
+    if(firstMetaEl){
+      const placaSpan = firstMetaEl.querySelector("span");
+      if(placaSpan) placaSpan.textContent = firstBus.placa || firstBus._id || "Bus-1";
+      const sec = firstMetaEl.querySelector(".secondary");
+      if(sec) sec.textContent = `Velocidad: No disponible · Pasajeros: ${firstAssigned} / ${firstBus.capacidad_total || '-'}`;
+    }
+    const routeLabel = document.querySelector(".route-label");
+    if(routeLabel) routeLabel.textContent = firstBus.ruta_actual_id || "-";
+    // barra de progreso principal
+    const mainProgress = document.querySelector(".progress-bar");
+    if(mainProgress) mainProgress.style.width = Math.min(Math.max(percentAvg,0),100) + "%";
+  }
+
+  // -------- GRÁFICOS (Chart.js) --------
+  const labelsVel = ["06:00","09:00","12:00","15:00","18:00","21:00"];
+  const datasetsVel = buses.map((b, i) => {
+    const base = 30 + Math.round((safeNumber(b.capacidad_total) / (totalCapacity || 1)) * 40);
+    const data = labelsVel.map((l, j) => Math.max(10, Math.round(base + (Math.sin((i+1)*(j+1))*8) + (Math.random()*6-3))));
+    return {
+      label: b.placa || ("Bus " + (i+1)),
+      data,
+      fill: false,
+      tension: 0.3
+    };
+  });
+
+  // destroy previous charts if exist
+  if(chartVelocidad){ chartVelocidad.destroy(); chartVelocidad = null; }
+  if(chartParadas){ chartParadas.destroy(); chartParadas = null; }
+  if(chartOcupacion){ chartOcupacion.destroy(); chartOcupacion = null; }
+
+  const ctxVel = document.getElementById("chartVelocidad").getContext("2d");
+  chartVelocidad = new Chart(ctxVel, {
+    type: 'line',
+    data: {
+      labels: labelsVel,
+      datasets: datasetsVel
+    },
+    options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { display: true, position: 'bottom' } },
+      scales: {
+        y: { beginAtZero: true, title: { display: true, text: 'Km/h (simulado)' } }
+      }
+    }
+  });
+
+  // 2) chartParadas: usa nombres de paradas y conteo_estimado_personas reales
+  const labelsPar = paradas.map(p => p.nombre_parada || p._id);
+  const dataPar = paradas.map(p => safeNumber(p.conteo_estimado_personas));
+
+  const ctxPar = document.getElementById("chartParadas").getContext("2d");
+  chartParadas = new Chart(ctxPar, {
+    type: 'bar',
+    data: {
+      labels: labelsPar,
+      datasets: [{
+        label: 'Personas estimadas',
+        data: dataPar
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+
+  // 3) chartOcupacion: pie con distribución entre tickets y discapacitados (métricas) y total pasajeros
+  const tickets = safeNumber(met.total_tickets_hoy);
+  const discap = safeNumber(met.total_pasajeros_discapacitados_hoy);
+  const otros = Math.max(0, totalPassengers - discap);
+
+  const ctxOcc = document.getElementById("chartOcupacion").getContext("2d");
+  chartOcupacion = new Chart(ctxOcc, {
+    type: 'pie',
+    data: {
+      labels: ['Tickets vendidos', 'Discapacitados', 'Otros pasajeros (estim.)'],
+      datasets: [{
+        data: [tickets, discap, otros]
+      }]
+    },
+    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+  });
+
+} // end renderDashboard
+
+// Inicial y cada 5 segundos
+renderDashboard();
+setInterval(renderDashboard, 5000);
+
+let ultimoData = null;  // para guardar el JSON más reciente
+
+async function fetchAndStoreData() {
+  const res = await fetch(API_URL, { cache: "no-store" });
+  const data = await res.json();
+  ultimoData = data;
+  return data;
+}
+
+// Sobrescribe renderDashboard para que siempre use fetchAndStoreData
+async function renderDashboardAndStore() {
+  const data = await fetchAndStoreData();
+  await renderDashboard(); 
+}
+
+// Llamas esta versión nueva:
+renderDashboardAndStore();
+setInterval(renderDashboardAndStore, 5000);
+
+// Función para generar PDF
+async function generarPDF(data) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  doc.setFontSize(18);
+  doc.text("Reporte TrafficZone", 14, 20);
+
+  doc.setFontSize(12);
+  doc.text(`Fecha del reporte: ${new Date().toLocaleString()}`, 14, 30);
+
+  // Métricas
+  doc.text("Métricas:", 14, 45);
+  const met = data.Metricas;
+  doc.text(`- Ruta más concurrida: ${met.ruta_mas_concurrida_hoy}`, 14, 55);
+  doc.text(`- Hora pico: ${met.hora_pico_hoy}:00`, 14, 63);
+  doc.text(`- Tickets hoy: ${met.total_tickets_hoy}`, 14, 71);
+  doc.text(`- Pasajeros discapacitados: ${met.total_pasajeros_discapacitados_hoy}`, 14, 79);
+
+  // Buses
+  doc.text("Buses actuales:", 14, 95);
+  data.Estado_Actual_Buses.forEach((bus, i) => {
+    const y = 105 + i * 10;
+    doc.text(
+      `• Placa: ${bus.placa}, Ruta: ${bus.ruta_actual_id}, Capacidad: ${bus.capacidad_total}`,
+      14,
+      y
+    );
+  });
+
+  // Paradas
+  doc.text("Paradas monitoreadas:", 14, 105 + data.Estado_Actual_Buses.length * 10 + 10);
+  data.Estado_Actual_Paradas.forEach((par, i) => {
+    const y = 115 + data.Estado_Actual_Buses.length * 10 + i * 10;
+    doc.text(
+      `• ${par.nombre_parada} — Personas estimadas: ${par.conteo_estimado_personas}`,
+      14,
+      y
+    );
+  });
+
+  // Guardar
+  doc.save("reporte_trafficzone.pdf");
+}
+
+// Función para generar Excel (.xlsx)
+function generarExcel(data) {
+  // Crear libro
+  const wb = XLSX.utils.book_new();
+
+  // Hoja de buses
+  const buses = data.Estado_Actual_Buses.map(bus => ({
+    placa: bus.placa,
+    ruta: bus.ruta_actual_id,
+    capacidad: bus.capacidad_total,
+    ultima_actualizacion: bus.ultima_actualizacion
+  }));
+  const wsBuses = XLSX.utils.json_to_sheet(buses);
+  XLSX.utils.book_append_sheet(wb, wsBuses, "Buses");
+
+  // Hoja de paradas
+  const paradas = data.Estado_Actual_Paradas.map(p => ({
+    nombre: p.nombre_parada,
+    densidad: p.densidad_actual,
+    conteo: p.conteo_estimado_personas,
+    ultima_actualizacion: p.ultima_actualizacion_ia
+  }));
+  const wsParadas = XLSX.utils.json_to_sheet(paradas);
+  XLSX.utils.book_append_sheet(wb, wsParadas, "Paradas");
+
+  // Hoja de métricas
+  const met = data.Metricas;
+  const wsMet = XLSX.utils.json_to_sheet([{
+    ruta_mas_concurrida_hoy: met.ruta_mas_concurrida_hoy,
+    hora_pico_hoy: met.hora_pico_hoy,
+    total_tickets_hoy: met.total_tickets_hoy,
+    total_pasajeros_discapacitados_hoy: met.total_pasajeros_discapacitados_hoy
+  }]);
+  XLSX.utils.book_append_sheet(wb, wsMet, "Métricas");
+
+  // Libro a archivo
+  XLSX.writeFile(wb, "reporte_trafficzone.xlsx");
+}
+
+// Vincular botón
+document.getElementById("btnReporte").addEventListener("click", async () => {
+  if (!ultimoData) {
+    await fetchAndStoreData();
+  }
+  generarPDF(ultimoData);
+  generarExcel(ultimoData);
+});
+
+</script>
+
+</body>
+</html>

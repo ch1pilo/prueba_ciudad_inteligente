@@ -1,140 +1,150 @@
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 body {
-    font-family: 'Poppins', sans-serif;
-    color: #ffffff;
-    background: linear-gradient(180deg, #0a1ccf 0%, #03052d 70%);
-    overflow-x: hidden;
+  font-family: 'Poppins', sans-serif;
+  color: #ffffff;
+  background: linear-gradient(180deg, #0a1ccf 0%, #03052d 70%);
+  overflow-x: hidden;
 }
 
 /* NAVBAR */
 .navbar {
-    position: sticky;
-    top: 0;
-    left: 0;
-    z-index: 50;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 40px;
-    background: rgba(0, 0, 0, 0.28);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.28);
+  position: sticky;
+  top: 0;
+  left: 0;
+  z-index: 50;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 40px;
+  background: rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.28);
 }
 
 .logo {
-    font-weight: 700;
-    font-size: 1.8rem;
+  font-weight: 700;
+  font-size: 1.8rem;
 }
 
 .nav-links {
-    display: flex;
-    gap: 30px;
-    font-size: 0.85rem;
-    text-transform: uppercase;
+  display: flex;
+  gap: 30px;
+  font-size: 0.85rem;
+  text-transform: uppercase;
 }
 
 .nav-links a {
-    color: #fff;
-    text-decoration: none;
-    opacity: 0.75;
-    transition: 0.2s;
+  color: #fff;
+  text-decoration: none;
+  opacity: 0.75;
+  transition: 0.2s;
 }
 
 .nav-links a.active,
 .nav-links a:hover {
-    opacity: 1;
+  opacity: 1;
 }
 
-/* SECCIÓN LOGIN */
+/* ¡NUEVO! Icono Hamburguesa (Oculto por defecto en PC) */
+.hamburger-icon {
+  display: none;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.6rem;
+  cursor: pointer;
+}
+
+/* SECCIÓN LOGIN (Sin cambios) */
 .login-hero {
-    position: relative;
-    min-height: calc(100vh - 80px); /* resto del alto (navbar aprox) */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 40px 20px;
-    background-image: url("https://i.ibb.co/Vcc0hjPb/LOGIN-PA.png"); /* IMAGEN DE FONDO */
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
+  position: relative;
+  min-height: calc(100vh - 80px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  background-image: url("https://i.ibb.co/Vcc0hjPb/LOGIN-PA.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
-/* TARJETA DE LOGIN */
 .login-card {
-    width: 100%;
-    max-width: 420px;
-    background: rgba(255, 255, 255, 0.95);
-    color: #111827;
-    border-radius: 16px;
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.45);
-    padding: 30px 34px 26px;
-    text-align: center;
+  width: 100%;
+  max-width: 420px;
+  background: rgba(255, 255, 255, 0.95);
+  color: #111827;
+  border-radius: 16px;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.45);
+  padding: 30px 34px 26px;
+  text-align: center;
 }
 
+/* ... (El resto de tus estilos .login-subtitle, .login-title, .field, .btn-primary, etc. van aquí sin cambios) ... */
 .login-subtitle {
-    font-size: 0.75rem;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: #9ca3af;
-    margin-bottom: 6px;
+  font-size: 0.75rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #9ca3af;
+  margin-bottom: 6px;
 }
 
 .login-title {
-    font-size: 1.8rem;
-    font-weight: 800;
-    color: transparent;
-    background: linear-gradient(90deg, #0a1ccf, #03052d);
-    -webkit-background-clip: text;
-    background-clip: text;
-    margin-bottom: 18px;
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: transparent;
+  background: linear-gradient(90deg, #0a1ccf, #03052d);
+  -webkit-background-clip: text;
+  background-clip: text;
+  margin-bottom: 18px;
 }
 
 .login-form {
-    text-align: left;
-    margin-top: 8px;
+  text-align: left;
+  margin-top: 8px;
 }
 
 .field-label {
-    font-size: 0.8rem;
-    color: #6b7280;
-    margin-bottom: 4px;
-    display: block;
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin-bottom: 4px;
+  display: block;
 }
 
 .input-group {
-    position: relative;
-    width: 100%;
-    margin-bottom: 14px;
+  position: relative;
+  width: 100%;
+  margin-bottom: 14px;
 }
 
 .field {
-    width: 100%;
-    border-radius: 999px;
-    padding: 12px 16px;
-    border: 1px solid #d1d5db;
-    outline: none;
-    font-size: 0.85rem;
-    padding-left: 40px; /* Espacio para el icono */
+  width: 100%;
+  border-radius: 999px;
+  padding: 12px 16px;
+  border: 1px solid #d1d5db;
+  outline: none;
+  font-size: 0.85rem;
+  padding-left: 40px;
 }
 
 .input-group i {
-    position: absolute;
-    top: 14px;
-    left: 16px;
-    color: #0a1ccf;
-    font-size: 1.2rem;
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  color: #0a1ccf;
+  font-size: 1.2rem;
 }
 
 .field:focus {
-    border-color: #1d4ed8;
-    box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.5);
+  border-color: #1d4ed8;
+  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.5);
 }
 
 .icon-password {
@@ -144,114 +154,202 @@ body {
     color: #0a1ccf;
     font-size: 1.2rem;
     cursor: pointer;
+    left: 90% !important;
 }
 
-/* MÉTODOS DE ACCESO */
 .login-footer {
-    margin-top: 20px;
+  margin-top: 20px;
 }
 
 .login-footer a {
-    display: block;
-    margin-bottom: 10px;
-    color: #1d4ed8;
-    text-decoration: none;
+  display: block;
+  margin-bottom: 10px;
+  color: #1d4ed8;
+  text-decoration: none;
 }
 
 .btn-primary {
-    width: 100%;
-    border: none;
-    border-radius: 999px;
-    padding: 12px 18px;
-    font-size: 0.95rem;
-    font-weight: 600;
-    cursor: pointer;
-    background: #1322a4;
-    color: #fff;
-    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.5);
-    transition: 0.18s transform, 0.18s box-shadow, 0.18s background;
+  width: 100%;
+  border: none;
+  border-radius: 999px;
+  padding: 12px 18px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: #1322a4;
+  color: #fff;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.5);
+  transition: 0.18s transform, 0.18s box-shadow, 0.18s background;
 }
 
 .btn-primary:hover {
-    transform: translateY(-1px);
-    background: #0f1b85;
-    box-shadow: 0 14px 40px rgba(15, 23, 42, 0.65);
+  transform: translateY(-1px);
+  background: #0f1b85;
+  box-shadow: 0 14px 40px rgba(15, 23, 42, 0.65);
 }
 
-/* MODAL ESTÉTICO DE AUTENTICACIÓN */
+/* MODALES (Estilos sin cambios) */
 .modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.8); /* Fondo oscuro */
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    animation: fadeIn 0.5s ease-in-out;
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.5s ease-in-out;
 }
 
 .modal-content {
-    background-color: #ffffff;
-    padding: 40px;
-    border-radius: 16px;
-    width: 90%;
-    max-width: 500px;
-    text-align: center;
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
-    transform: scale(0.8);
-    animation: slideUp 0.6s ease-out;
+  background-color: #ffffff;
+  padding: 40px;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 500px;
+  text-align: center;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.6s ease-out;
 }
 
 .modal-header {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #1322a4;
-    margin-bottom: 20px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1322a4;
+  margin-bottom: 20px;
 }
 
 .modal-body {
-    margin: 20px 0;
-    font-size: 1rem;
-    color: #444;
+  margin: 20px 0;
+  font-size: 1rem;
+  color: #444;
 }
 
 .modal-footer {
-    margin-top: 20px;
+  margin-top: 20px;
 }
 
 .btn-close {
-    background-color: #0a1ccf;
-    color: white;
-    padding: 12px 24px;
-    border: none;
-    cursor: pointer;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 1rem;
-    transition: 0.3s background-color;
+  background-color: #0a1ccf;
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  cursor: pointer;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: 0.3s background-color;
 }
 
 .btn-close:hover {
-    background-color: #0f1b85;
+  background-color: #0f1b85;
 }
 
 @keyframes fadeIn {
-    from {
-    opacity: 0;
-    }
-    to {
-    opacity: 1;
-    }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes slideUp {
-    from {
-    transform: translateY(30px);
-    }
-    to {
-    transform: translateY(0);
-    }
+  from { transform: translateY(30px); }
+  to { transform: translateY(0); }
+}
+
+
+/* ================================== */
+/* === CÓDIGO RESPONSIVO (MODIFICADO) === */
+/* ================================== */
+@media (max-width: 768px) {
+
+  /* --- INICIO CAMBIOS NAVBAR HAMBURGUESA --- */
+  .navbar {
+    padding: 16px 20px;
+    flex-direction: row; /* Mantenemos en fila */
+    justify-content: space-between; /* Logo a la izq, icono a la der */
+    align-items: center;
+    position: relative; /* Necesario para el menú absoluto */
+  }
+
+  /* Mostrar icono de hamburguesa */
+  .hamburger-icon {
+    display: block; /* Se muestra en móvil */
+    z-index: 101; /* Por encima del menú */
+  }
+
+  /* Ocultar links y convertirlos en menú desplegable */
+  .nav-links {
+    display: none; /* Oculto por defecto */
+    
+    /* Estilos del menú desplegable */
+    position: absolute;
+    top: 70px; /* Altura aprox del navbar, ajústalo si es necesario */
+    left: 0;
+    width: 100%;
+    
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+
+    /* Apilar links verticalmente */
+    flex-direction: column;
+    gap: 0;
+    padding: 10px 0;
+    justify-content: flex-start;
+    z-index: 100;
+  }
+  
+  /* Estilos de los links dentro del menú */
+  .nav-links a {
+     width: 100%;
+     text-align: center;
+     padding: 15px 0; /* Más área de click */
+     opacity: 0.9;
+  }
+  
+  .nav-links a:hover {
+    background: rgba(255, 255, 255, 0.1);
+    opacity: 1;
+  }
+
+  /* Clase 'show' que añade JS para MOSTRAR el menú */
+  .nav-links.show {
+    display: flex;
+  }
+  /* --- FIN CAMBIOS NAVBAR --- */
+
+
+  .logo {
+    font-size: 1.5rem;
+  }
+
+  .login-hero {
+    /* Ajustar altura por navbar (aprox 70px) */
+    min-height: calc(100vh - 70px); 
+    padding-top: 40px;
+    padding-bottom: 40px;
+  }
+
+  .login-card {
+     width: 95%;
+     max-width: 420px;
+     padding: 25px 20px 20px;
+  }
+
+  .login-title {
+    font-size: 1.6rem;
+  }
+
+  /* Modal responsive (sin cambios) */
+  .modal-content {
+    width: 95%;
+    padding: 25px 20px;
+  }
+
+  .modal-header {
+    font-size: 1.3rem;
+  }
 }

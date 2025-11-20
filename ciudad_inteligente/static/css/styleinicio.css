@@ -6,30 +6,27 @@
 
 body {
     font-family: 'Poppins', sans-serif;
-    background: linear-gradient(180deg, #0a1ccf 0%, #03052d 70%);
+    background: linear-gradient(180deg, #0a1ccf 0%, #03052d 100%);
     color: #ffffff;
-    overflow-x: hidden;
+    overflow-x: hidden; 
 }
 
-/* NAVBAR — FIJA, GLASS EFFECT + SOMBRA */
+/* NAVBAR */
 .navbar {
     position: sticky;
     top: 0;
     left: 0;
     z-index: 50;
-
     display: flex;
     justify-content: space-between;
     align-items: center;
-
     padding: 16px 40px;
-
     background: rgba(0, 0, 0, 0.28);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-
     border-bottom: 1px solid rgba(255, 255, 255, 0.15);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.28);
+    height: 70px; /* Altura fija para calc() */
 }
 
 .logo {
@@ -56,13 +53,28 @@ body {
     opacity: 1;
 }
 
+/* ¡NUEVO! Estilo para el icono de hamburguesa (oculto en PC) */
+.hamburger-icon {
+  display: none;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.6rem;
+  cursor: pointer;
+  z-index: 101;
+}
+
 /* HERO */
 .hero {
     position: relative;
     width: 100%;
-    height: 100vh;
-    padding: 140px 60px 20px; /* espacio para navbar fijo */
+    height: calc(100vh - 70px); /* Restamos el navbar */
+    padding: 40px;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
 }
 
 /* IMAGEN PRINCIPAL */
@@ -76,6 +88,7 @@ body {
     max-width: none;
     z-index: 1;
     pointer-events: none;
+    opacity: 0.8;
 }
 
 /* TEXTOS FLOTANTES */
@@ -85,61 +98,166 @@ body {
     font-weight: 600;
     font-size: 0.95rem;
 }
-
-/* RASTREA → CENTRADO ARRIBA DE "RUTA" */
 .tag-top {
-    top: 50px;          /* altura arriba del título */
-    left: 50%;           /* centro horizontal */
+    top: 15vh;
+    left: 50%;
     transform: translateX(-50%);
 }
-
-.tag-left  { top: 220px; left: 6%; }
-.tag-right { top: 450px; right: 6%; text-align: right; }
+.tag-left {
+    top: 35vh;
+    left: 10vw;
+}
+.tag-right {
+    top: 50vh;
+    right: 10vw;
+    text-align: right;
+}
 
 /* BULLET */
 .hero-bullets {
     position: absolute;
-    bottom: 160px;
-    left: 6%;
+    bottom: 10vh;
+    left: 10vw;
     list-style: disc;
     font-size: 1rem;
     z-index: 5;
 }
-
 .hero-bullets li {
     margin-bottom: 6px;
 }
 
-/* RESPONSIVE */
+/* ================== */
+/* RESPONSIVE (TABLET)*/
+/* ================== */
 @media (max-width: 900px) {
-    .hero {
-    padding: 150px 20px 20px;
-    height: 90vh;
+    .navbar {
+        padding: 16px 20px;
+        height: 70px; /* Mantenemos altura fija */
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        position: relative;
     }
 
-    .logo { font-size: 1.4rem; }
+    /* ¡NUEVO! Mostramos el icono */
+    .hamburger-icon {
+        display: block;
+    }
 
+    /* ¡NUEVO! Ocultamos los links y los preparamos como menú */
     .nav-links {
-    gap: 16px;
-    font-size: 0.72rem;
+        display: none; 
+        position: absolute;
+        top: 70px; 
+        left: 0;
+        width: 100%;
+        background: rgba(0, 0, 0, 0.45);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        flex-direction: column;
+        gap: 0;
+        padding: 10px 0;
+        justify-content: flex-start;
+        z-index: 100;
+    }
+    .nav-links a {
+        width: 100%;
+        text-align: center;
+        padding: 15px 0;
+        opacity: 0.9;
+    }
+    .nav-links a:hover {
+        background: rgba(255, 255, 255, 0.1);
+        opacity: 1;
+    }
+    /* ¡NUEVO! Clase que añade JS para mostrar el menú */
+    .nav-links.show {
+        display: flex;
+    }
+    
+    .hero {
+        padding: 20px;
+        height: calc(100vh - 70px); /* Restamos navbar de tablet */
+    }
+
+    .logo { 
+        font-size: 1.4rem; 
     }
 
     .hero-img {
-    width: 150%;
-    top: 55%;
+        width: 150%;
+        top: 55%;
+        opacity: 0.6;
     }
 
+    /* Posiciones "exparcidas" para Tablet */
     .tag-top {
-    top: 130px;
-    left: 50%;
-    transform: translateX(-50%);
+        top: 20vh;
+    }
+    .tag-left { 
+        top: 35vh; 
+        left: 8vw; 
+    }
+    .tag-right { 
+        top: 45vh; 
+        right: 8vw; 
+    }
+    .hero-bullets {
+        bottom: 15vh;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80%;
+        text-align: center;
+    }
+}
+
+/* ================== */
+/* RESPONSIVE (MÓVIL) */
+/* ================== */
+@media (max-width: 700px) {
+    .logo {
+        font-size: 1.3rem;
+    }
+    
+    .hero {
+        text-align: center;
+        height: calc(100vh - 70px); /* Restamos navbar de móvil */
     }
 
-    .tag-left  { top: 260px; left: 8%; }
-    .tag-right { top: 310px; right: 8%; }
+    .hero-img {
+        top: 0;
+        left: 0;
+        transform: none;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0.4;
+    }
 
+    /* Posiciones "exparcidas" para Móvil (como querías) */
+    .tag-top {
+        top: 18vh;
+        font-size: 1.1rem;
+    }
+    .tag-left {
+        top: 30vh;
+        left: 5vw;
+        font-size: 1.3rem;
+    }
+    .tag-right {
+        top: 40vh;
+        right: 5vw;
+        font-size: 1.3rem;
+    }
     .hero-bullets {
-    bottom: 90px;
-    left: 8%;
+        bottom: 10vh;
+        font-size: 1.1rem;
+        list-style: none;
+        padding: 10px;
+        margin-top: 20px;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
     }
 }

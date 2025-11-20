@@ -1,6 +1,7 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8" />
   <title>TrafficZone - Inicio de Sesión</title>
@@ -12,60 +13,54 @@
 
 <body>
 
-  <!-- NAVBAR -->
   <header class="navbar">
     <div class="logo">TrafficZone</div>
-    <nav class="nav-links">
-      <a href="index.html">INICIO</a>
-      <a href="#about">ACERCA DE NOSOTROS</a>
-      <a href="#contacto">CONTÁCTANOS</a>
+
+    <nav class="nav-links" id="navLinks">
+      <a href="{% url 'home' %}">INICIO</a>
+      <a href="{% url 'rutas' %}" aria-label="login">Vista rutas</a>
+      <a href="{% url 'login' %}" aria-label="login">Login</a>
     </nav>
+
+    <button class="hamburger-icon" onclick="toggleMenu()">
+      <i class="fas fa-bars"></i>
+    </button>
   </header>
 
-  <!-- SECCIÓN LOGIN -->
   <section class="login-hero">
     <div class="login-card">
       <div class="login-subtitle">BIENVENIDO AL</div>
       <h1 class="login-title">INICIO DE SESIÓN</h1>
-
       <form class="login-form" action="{% url 'logueo' %}" method="POST">
         {% csrf_token %}
         <div class="input-group">
           <i class="fas fa-user"></i>
           <input id="user" type="text" class="field" name="nombre" placeholder="Ingresa tu usuario" required>
         </div>
-
         <div class="input-group">
           <i class="fas fa-lock"></i>
           <input id="pass" type="password" name="pasword" class="field" placeholder="Ingresa tu contraseña" required>
           <i class="fas fa-eye icon-password" onclick="togglePassword()"></i>
         </div>
-
         <button type="submit" class="btn-primary">Acceder</button>
-
         <div class="login-footer">
           <p><a href="#" onclick="openFaceModal()">Ingresar con reconocimiento facial</a></p>
           <p><a href="#" onclick="openEmailModal()">Ingresar con correo electrónico</a></p>
         </div>
       </form>
-
-      <div class="login-footer">
-        <a href="registro.html">¿Aún no tienes cuenta? Créate una</a>
-      </div>
     </div>
   </section>
 
-  <!-- MODAL RECONOCIMIENTO FACIAL -->
   <div id="faceModal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
         Autenticación Facial
       </div>
       <div class="modal-body">
-        <!-- Contenido de reconocimiento facial integrado -->
         <div style="text-align: center;">
           <div class="stage">
-            <video id="inputVideo" autoplay playsinline muted style="max-width: 100%; background: #111; border-radius: 8px;"></video>
+            <video id="inputVideo" autoplay playsinline muted
+              style="max-width: 100%; background: #111; border-radius: 8px;"></video>
             <canvas id="overlay" style="position: absolute; top: 0; left: 0; pointer-events: none;"></canvas>
           </div>
           <button class="btn-primary" id="captureUploadBtn" style="margin: 15px 0;">Tomar y verificar rostro</button>
@@ -75,8 +70,6 @@
       </div>
     </div>
   </div>
-
-  <!-- MODAL CORREO ELECTRÓNICO -->
   <div id="emailModal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
@@ -97,11 +90,17 @@
     </div>
   </div>
 
-  <!-- Scripts -->
+
   <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
-  
+
   <script>
-    // ===== FUNCIONES BÁSICAS DEL LOGIN =====
+    // ===== ¡NUEVA FUNCIÓN PARA EL MENÚ! =====
+    function toggleMenu() {
+      const navLinks = document.getElementById('navLinks');
+      navLinks.classList.toggle('show');
+    }
+
+    // ===== FUNCIONES BÁSICAS DEL LOGIN (Sin cambios) =====
     function togglePassword() {
       var passField = document.getElementById('pass');
       var icon = document.querySelector('.fa-eye');
@@ -113,7 +112,8 @@
         icon.classList.replace('fa-eye-slash', 'fa-eye');
       }
     }
-
+    
+    // ... (El resto de tus funciones JS: openFaceModal, openEmailModal, startCamera, syncCanvasToVideo, etc. van aquí sin cambios) ...
     function openFaceModal() {
       document.getElementById("faceModal").style.display = "flex";
       startCamera(); // Iniciar cámara al abrir modal
@@ -134,11 +134,10 @@
       document.getElementById("emailModal").style.display = "none";
     }
 
-    // ===== FUNCIONALIDAD CORREO ELECTRÓNICO =====
     async function submitEmailForm(event) {
       event.preventDefault();
       const formData = new FormData(event.target);
-      
+
       try {
         const response = await fetch("{% url 'verificar_correo' %}", {
           method: 'POST',
@@ -147,7 +146,7 @@
             'X-CSRFToken': '{{ csrf_token }}'
           }
         });
-        
+
         const result = await response.json();
         if (result.success) {
           alert('Código enviado a tu correo. Revisa tu bandeja de entrada.');
@@ -160,12 +159,10 @@
       }
     }
 
-    // ===== FUNCIONALIDAD RECONOCIMIENTO FACIAL =====
     const video = document.getElementById('inputVideo');
     const canvas = document.getElementById('overlay');
     const statusDiv = document.getElementById('status');
     const captureUploadBtn = document.getElementById('captureUploadBtn');
-
     let stream = null;
 
     async function startCamera() {
@@ -175,10 +172,10 @@
           audio: false
         });
         video.srcObject = stream;
-        
-        // Iniciar detección facial después de que el video esté listo
         video.addEventListener('loadedmetadata', () => {
-          initFaceRecognition();
+          setTimeout(() => {
+            initFaceRecognition();
+          }, 650);
         });
       } catch (err) {
         alert("No se pudo iniciar la cámara: " + err.message);
@@ -193,37 +190,43 @@
     }
 
     function syncCanvasToVideo() {
-      const rect = video.getBoundingClientRect();
-      canvas.style.width = rect.width + "px";
-      canvas.style.height = rect.height + "px";
-      canvas.width = rect.width;
-      canvas.height = rect.height;
-      return { width: rect.width, height: rect.height };
+        const stage = video.parentElement;
+        if (window.getComputedStyle(stage).position === 'static') {
+            stage.style.position = 'relative';
+        }
+        const top = video.offsetTop;
+        const left = video.offsetLeft;
+        const width = video.clientWidth;
+        const height = video.clientHeight;
+        canvas.style.top = top + 'px';
+        canvas.style.left = left + 'px';
+        canvas.style.width = width + 'px';
+        canvas.style.height = height + 'px';
+        canvas.width = width;
+        canvas.height = height;
+        return { width: width, height: height };
     }
 
     async function initFaceRecognition() {
       const MODEL_URL = '/static/models';
-      
       await faceapi.loadSsdMobilenetv1Model(MODEL_URL);
       await faceapi.loadFaceLandmarkModel(MODEL_URL);
       await faceapi.loadFaceRecognitionModel(MODEL_URL);
-
       async function runDetection() {
         if (video.paused || video.ended) return setTimeout(runDetection, 200);
-
         const displaySize = syncCanvasToVideo();
+        if (displaySize.width === 0 || displaySize.height === 0) {
+            return setTimeout(runDetection, 100);
+        }
         const detections = await faceapi.detectAllFaces(video)
           .withFaceLandmarks()
           .withFaceDescriptors();
-
         const resizedResults = faceapi.resizeResults(detections, displaySize);
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         faceapi.draw.drawFaceLandmarks(canvas, resizedResults);
-
         setTimeout(runDetection, 100);
       }
-
       runDetection();
     }
 
@@ -241,13 +244,11 @@
     async function captureAndUpload() {
       statusDiv.textContent = "Verificando rostro...";
       statusDiv.className = "loading";
-
       const dataUrl = takeSnapshot();
       const res = await fetch(dataUrl);
       const blob = await res.blob();
       const formData = new FormData();
       formData.append('photo', blob, 'captura.jpg');
-
       try {
         const response = await fetch('/upload-photo/', {
           method: 'POST',
@@ -256,7 +257,6 @@
             'X-CSRFToken': '{{ csrf_token }}'
           }
         });
-        
         const result = await response.json();
         if (result.autorizado) {
           statusDiv.textContent = "✅ Rostro verificado";
@@ -271,11 +271,9 @@
       }
     }
 
-    // Event listeners
     captureUploadBtn.addEventListener('click', captureAndUpload);
 
-    // Cerrar modales al hacer clic fuera
-    window.addEventListener('click', function(event) {
+    window.addEventListener('click', function (event) {
       if (event.target.classList.contains('modal')) {
         event.target.style.display = 'none';
         stopCamera();
